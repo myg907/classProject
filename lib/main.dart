@@ -14,7 +14,7 @@ class HomeScreen extends StatelessWidget {
       body: Column(
         children: [
           OutlinedButton(
-              child: Text("Screen One"),
+              child: Text("About Screen"),
               onPressed: () {
                 Navigator.of(context)
                     .push(MaterialPageRoute(builder: (context) => AboutScreen()));
@@ -31,7 +31,7 @@ class AboutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Screen One")),
+      appBar: AppBar(title: Text("About Screen")),
       body: Center(
         child: Text(
           "This screen was created by Melissa Gomez",
