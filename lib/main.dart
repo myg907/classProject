@@ -11,7 +11,8 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Breathe In Stand Down")),
-      body: Column(
+      body: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           OutlinedButton(
               child: Text("About Screen"),
@@ -36,7 +37,7 @@ class AboutScreen extends StatelessWidget {
         child: Text(
           "This screen was created by Melissa Gomez",
           style: TextStyle(
-              fontWeight: FontWeight.bold, fontStyle: FontStyle.italic),
+              fontWeight: FontWeight.bold),
         ),
       ),
     );
