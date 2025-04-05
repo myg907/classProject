@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
-  runApp(MaterialApp(title: "Breathe In Stand Down", home: SplashScreen()));
+void main() async{
+  runApp(const MaterialApp(title: "Breathe In Stand Down", home: SplashScreen()));
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 }
 
 //Class Definition that it's used in the progress screen
