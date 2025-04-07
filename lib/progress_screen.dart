@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'week_screen.dart';
+import 'login_screen.dart';
 
 class Week {
   final String id; 
@@ -33,46 +35,78 @@ class ProgressScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(centerTitle: true, title: const Text("Progress Screen")),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('Weeks')
-            .orderBy('order')
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: Column(
+        children: [
+          // StreamBuilder for weeks data
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('Weeks')
+                  .orderBy('order')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-          final weeks = snapshot.data!.docs
-              .map((doc) => Week.fromDocument(doc))
-              .toList();
+                final weeks = snapshot.data!.docs
+                    .map((doc) => Week.fromDocument(doc))
+                    .toList();
 
-          if (weeks.isEmpty) {
-            return const Center(child: Text("No weeks found."));
-          }
+                if (weeks.isEmpty) {
+                  return const Center(child: Text("No weeks found."));
+                }
 
-          return ListView.builder(
-            itemCount: weeks.length,
-            itemBuilder: (context, index) {
-              final week = weeks[index];
+                return ListView.builder(
+                  itemCount: weeks.length,
+                  itemBuilder: (context, index) {
+                    final week = weeks[index];
 
-              return ListTile(
-                title: Text(week.label),
-                subtitle: Text(week.status),
-                leading: _getStatusIcon(week.status),
-                trailing: const Icon(Icons.arrow_forward),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => WeekScreen(week: week),
-                    ),
-                  );
-                },
-              );
-            },
-          );
-        },
+                    return ListTile(
+                      title: Text(week.label),
+                      subtitle: Text(week.status),
+                      leading: _getStatusIcon(week.status),
+                      trailing: const Icon(Icons.arrow_forward),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => WeekScreen(week: week),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          // ElevatedButton for logout at the bottom
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              onPressed: () {
+                // Sign out the user and navigate to the login screen
+                FirebaseAuth.instance.signOut();
+
+                // Navigate to the login screen and clear the navigation stack
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (context) => const LoginScreen(),
+                  ),
+                  (route) => false,
+                );
+              },
+              child: const Text(
+                "Logout",
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  color: Color.fromARGB(255, 8, 67, 82),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -28,7 +28,8 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               TextFormField(
                   decoration:
-                      const InputDecoration(hintText: 'Enter your email'),
+                      const InputDecoration(hintText: 'Enter your email', 
+                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color.fromARGB(255, 8, 67, 82)))),
                   maxLength: 64,
                   onChanged: (value) => email = value,
                   validator: (value) {
@@ -39,7 +40,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   }),
               TextFormField(
                   decoration:
-                      const InputDecoration(hintText: "Enter a password"),
+                      const InputDecoration(hintText: "Enter a password",
+                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color.fromARGB(255, 8, 67, 82)))),
                   obscureText: true,
                   onChanged: (value) => password = value,
                   validator: (value) {
@@ -50,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   }),
               const SizedBox(height: 16),
               ElevatedButton(
-                  child: const Text('Login'),
+                  child: const Text('Login', style: TextStyle(fontFamily: 'Poppins', color: Color.fromARGB(255, 8, 67, 82)),),
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
                       // This calls all validators() inside the form for us.

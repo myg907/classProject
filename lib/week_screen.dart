@@ -1,51 +1,42 @@
 import 'package:flutter/material.dart';
-import 'progress_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'progress_screen.dart';
 
-// class WeekScreen extends StatelessWidget {
-//   final Week week;
 
-//   const WeekScreen({super.key, required this.week});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(title: Text(week.label)),
-//       body: Center(
-//         child: Text(
-//           week.label,
-//           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, fontFamily: "Poppins"),
-//         ),
-//       ),
-//     );
-//   }
-// }
-// for the Week class
-
-class WeekScreen extends StatelessWidget {
+class WeekScreen extends StatefulWidget {
   final Week week;
 
   const WeekScreen({super.key, required this.week});
 
   @override
-  Widget build(BuildContext context) {
-    final weeklyContentRef = FirebaseFirestore.instance
-        .collection('Weeks')
-        .doc(week.id)
-        .collection('WeeklyContent')
-        .orderBy('order');
+  _WeekScreenState createState() => _WeekScreenState();
+}
 
+class _WeekScreenState extends State<WeekScreen> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  late CollectionReference _weeklyContentRef;
+  late String _userId;
+
+  @override
+  void initState() {
+    super.initState();
+    _userId = FirebaseAuth.instance.currentUser!.uid;
+    _weeklyContentRef = _firestore.collection('Weeks').doc(widget.week.id).collection('WeeklyContent');
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(week.label)),
+      appBar: AppBar(title: Text(widget.week.label)),
       body: StreamBuilder<QuerySnapshot>(
-        stream: weeklyContentRef.snapshots(),
+        stream: _weeklyContentRef.orderBy('order').snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
 
           final contentDocs = snapshot.data!.docs;
-
           if (contentDocs.isEmpty) {
             return const Center(child: Text("No content available."));
           }
@@ -57,22 +48,115 @@ class WeekScreen extends StatelessWidget {
               final type = data['type'];
               final content = data['content'];
               final status = data['status'];
+              final contentId = contentDocs[index].id; 
 
-              return Card(
-                margin: const EdgeInsets.all(8),
-                child: ListTile(
-                  title: Text(type == 'question' ? "Question" : "Meditation"),
-                  subtitle: Text(content),
-                  trailing: Icon(
-                    status == 'complete' ? Icons.check : Icons.radio_button_unchecked,
-                    color: status == 'complete' ? Colors.green : Colors.grey,
-                  ),
-                ),
-              );
+              return type == 'question'
+                  ? _buildQuestionTile(content, status, contentId)
+                  : _buildMeditationTile(content, status, contentId);
             },
           );
         },
       ),
     );
   }
+
+  // Simplified code for handling question type content
+  Widget _buildQuestionTile(String content, String status, String contentId) {
+    TextEditingController _answerController = TextEditingController();
+
+    // Fetch user's answer if available
+    _firestore.collection('Weeks')
+        .doc(widget.week.id)
+        .collection('WeeklyContent')
+        .doc(contentId)
+        .collection('Answers')
+        .doc(_userId) // Use the current user's UID
+        .get()
+        .then((doc) {
+      if (doc.exists) {
+        _answerController.text = doc['answer'];
+      }
+    });
+
+    return Card(
+      margin: const EdgeInsets.all(8),
+      child: ListTile(
+        title: const Text("Question"),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(content),
+            if (status != 'complete') ...[
+              TextField(
+                controller: _answerController,
+                decoration: const InputDecoration(labelText: 'Your answer'),
+                maxLines: 3,
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  // Save the user's answer to Firestore under their UID
+                  await _firestore.collection('Weeks')
+                      .doc(widget.week.id)
+                      .collection('WeeklyContent')
+                      .doc(contentId)
+                      .collection('Answers')
+                      .doc(_userId) // Use the current user's UID
+                      .set({
+                    'answer': _answerController.text,
+                    'timestamp': FieldValue.serverTimestamp(),
+                  });
+
+                  // Update status to 'complete'
+                  await _firestore.collection('Weeks')
+                      .doc(widget.week.id)
+                      .collection('WeeklyContent')
+                      .doc(contentId)
+                      .update({'status': 'complete'});
+                },
+                child: const Text('Submit Answer'),
+              ),
+            ],
+          ],
+        ),
+        trailing: Icon(
+          status == 'complete' ? Icons.check : Icons.radio_button_unchecked,
+          color: status == 'complete' ? Colors.green : Colors.grey,
+        ),
+      ),
+    );
+  }
+
+  // Simplified code for handling meditation type content
+  Widget _buildMeditationTile(String content, String status, String contentId) {
+    return Card(
+      margin: const EdgeInsets.all(8),
+      child: ListTile(
+        title: const Text("Meditation"),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(content),
+            if (status != 'complete') ...[
+              ElevatedButton(
+                onPressed: () async {
+                  // Mark meditation as complete when "Done" is clicked
+                  await _firestore.collection('Weeks')
+                      .doc(widget.week.id)
+                      .collection('WeeklyContent')
+                      .doc(contentId)
+                      .update({'status': 'complete'});
+                },
+                child: const Text('Done'),
+              ),
+            ],
+          ],
+        ),
+        trailing: Icon(
+          status == 'complete' ? Icons.check : Icons.radio_button_unchecked,
+          color: status == 'complete' ? Colors.green : Colors.grey,
+        ),
+      ),
+    );
+  }
 }
+
