@@ -5,7 +5,7 @@ import 'week_screen.dart';
 import 'login_screen.dart';
 
 class Week {
-  final String id; 
+  final String id;
   final int order;
   final String label;
   final String status;
@@ -22,8 +22,8 @@ class Week {
     return Week(
       id: doc.id,
       order: data['order'],
-      label: data['label'] ,
-      status: data['status'] ,
+      label: data['label'],
+      status: data['status'],
     );
   }
 }
@@ -34,77 +34,143 @@ class ProgressScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(centerTitle: true, title: const Text("Progress Screen")),
-      body: Column(
+      appBar: AppBar(
+        centerTitle: true,
+        backgroundColor:
+            const Color.fromARGB(255, 93, 164, 157).withValues(alpha: 0.5),
+        elevation: 0,
+        title: const Text(
+          "Progress Screen",
+          style: TextStyle(
+            fontSize: 22,
+            fontFamily: 'Popping',
+            fontWeight: FontWeight.w600,
+            color: Color.fromARGB(255, 43, 113, 105),
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white.withValues(alpha: 0.15),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
+              ),
+              onPressed: () {
+                FirebaseAuth.instance.signOut();
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (route) => false,
+                );
+              },
+              child: const Text("Logout"),
+            ),
+          ),
+        ],
+      ),
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          // StreamBuilder for weeks data
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('Weeks')
-                  .orderBy('order')
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+          Image.asset('assets/images/Login.jpg', fit: BoxFit.cover),
+          Container(color: Colors.black.withValues(alpha: 0.5)),
+          Column(
+            children: [
+              // StreamBuilder for weeks data
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('Weeks')
+                      .orderBy('order')
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          "No weeks found.",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      );
+                    }
 
-                final weeks = snapshot.data!.docs
-                    .map((doc) => Week.fromDocument(doc))
-                    .toList();
+                    final weeks = snapshot.data!.docs
+                        .map((doc) => Week.fromDocument(doc))
+                        .toList();
 
-                if (weeks.isEmpty) {
-                  return const Center(child: Text("No weeks found."));
-                }
-
-                return ListView.builder(
-                  itemCount: weeks.length,
-                  itemBuilder: (context, index) {
-                    final week = weeks[index];
-
-                    return ListTile(
-                      title: Text(week.label),
-                      subtitle: Text(week.status),
-                      leading: _getStatusIcon(week.status),
-                      trailing: const Icon(Icons.arrow_forward),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => WeekScreen(week: week),
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(16.0),
+                      itemCount: weeks.length,
+                      itemBuilder: (context, index) {
+                        final week = weeks[index];
+                        return Card(
+                          margin: const EdgeInsets.symmetric(vertical: 8.0),
+                          color: Colors.white.withValues(alpha: 0.8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ListTile(
+                            title: Text(
+                              week.label,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color.fromARGB(255, 43, 113, 105),
+                              ),
+                            ),
+                            subtitle: Text(
+                              week.status,
+                              style: const TextStyle(
+                                color: Colors.black87,
+                              ),
+                            ),
+                            leading: _getStatusIcon(week.status),
+                            trailing: const Icon(Icons.arrow_forward_ios),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => WeekScreen(week: week),
+                                ),
+                              );
+                            },
                           ),
                         );
                       },
                     );
                   },
-                );
-              },
-            ),
-          ),
-          // ElevatedButton for logout at the bottom
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
-              onPressed: () {
-                // Sign out the user and navigate to the login screen
-                FirebaseAuth.instance.signOut();
-
-                // Navigate to the login screen and clear the navigation stack
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(
-                    builder: (context) => const LoginScreen(),
-                  ),
-                  (route) => false,
-                );
-              },
-              child: const Text(
-                "Logout",
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  color: Color.fromARGB(255, 8, 67, 82),
                 ),
               ),
-            ),
+
+              // ElevatedButton for logout at the bottom
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Sign out the user and navigate to the login screen
+                    FirebaseAuth.instance.signOut();
+
+                    // Navigate to the login screen and clear the navigation stack
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (context) => const LoginScreen(),
+                      ),
+                      (route) => false,
+                    );
+                  },
+                  child: const Text(
+                    "Logout",
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      color: Color.fromARGB(255, 8, 67, 82),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
