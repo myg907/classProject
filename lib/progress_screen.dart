@@ -43,7 +43,7 @@ class ProgressScreen extends StatelessWidget {
           "Progress Screen",
           style: TextStyle(
             fontSize: 22,
-            fontFamily: 'Popping',
+            fontFamily: 'Poppins',
             fontWeight: FontWeight.w600,
             color: Color.fromARGB(255, 43, 113, 105),
           ),
@@ -66,7 +66,12 @@ class ProgressScreen extends StatelessWidget {
                   (route) => false,
                 );
               },
-              child: const Text("Logout"),
+              child: const Text("Logout",
+                style: TextStyle(
+                    fontFamily: 'Poppins',
+                    color: Color.fromARGB(255, 8, 67, 82),
+                    ),
+              ),
             ),
           ),
         ],
@@ -145,31 +150,31 @@ class ProgressScreen extends StatelessWidget {
                 ),
               ),
 
-              // ElevatedButton for logout at the bottom
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Sign out the user and navigate to the login screen
-                    FirebaseAuth.instance.signOut();
+              // // ElevatedButton for logout at the bottom
+              // Padding(
+              //   padding: const EdgeInsets.all(16.0),
+              //   child: ElevatedButton(
+              //     onPressed: () {
+              //       // Sign out the user and navigate to the login screen
+              //       FirebaseAuth.instance.signOut();
 
-                    // Navigate to the login screen and clear the navigation stack
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (context) => const LoginScreen(),
-                      ),
-                      (route) => false,
-                    );
-                  },
-                  child: const Text(
-                    "Logout",
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      color: Color.fromARGB(255, 8, 67, 82),
-                    ),
-                  ),
-                ),
-              ),
+              //       // Navigate to the login screen and clear the navigation stack
+              //       Navigator.of(context).pushAndRemoveUntil(
+              //         MaterialPageRoute(
+              //           builder: (context) => const LoginScreen(),
+              //         ),
+              //         (route) => false,
+              //       );
+              //     },
+              //     child: const Text(
+              //       "Logout",
+              //       style: TextStyle(
+              //         fontFamily: 'Poppins',
+              //         color: Color.fromARGB(255, 8, 67, 82),
+              //       ),
+              //     ),
+              //   ),
+              // ),
             ],
           ),
         ],
@@ -193,4 +198,6 @@ class ProgressScreen extends StatelessWidget {
         return const Icon(Icons.help_outline);
     }
   }
+  
+
 }

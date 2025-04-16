@@ -62,7 +62,12 @@ class _WeekScreenState extends State<WeekScreen> {
                   (route) => false,
                 );
               },
-              child: const Text("Logout"),
+              child: const Text("Logout",
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                    color: Color.fromARGB(255, 8, 67, 82),
+                    ),
+              ),
             ),
           ),
         ],
@@ -219,4 +224,6 @@ class _WeekScreenState extends State<WeekScreen> {
       ),
     );
   }
+  
+
 }

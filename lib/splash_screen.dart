@@ -74,6 +74,7 @@ class SplashScreen extends StatelessWidget {
                         Text(
                           'Breathe in, and Stand Down',
                           style: TextStyle(
+                            fontFamily: 'Poppins',
                             fontSize: 22,
                             fontWeight: FontWeight.w600,
                             color: Colors.teal[800],
@@ -83,6 +84,7 @@ class SplashScreen extends StatelessWidget {
                         Text(
                           'Welcome to a new you, $userEmail',
                           style: TextStyle(
+                            fontFamily: 'Poppins',
                             fontSize: 16,
                             fontStyle: FontStyle.italic,
                             color: Colors.teal[600],
