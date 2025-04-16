@@ -19,11 +19,12 @@ class Week {
 
   factory Week.fromDocument(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+
     return Week(
       id: doc.id,
-      order: data['order'],
-      label: data['label'],
-      status: data['status'],
+      order: data['order'] ?? 0,
+      label: data['label'] ?? 'Untitled Week',
+      status: data['status'] ?? 'unknown',
     );
   }
 }
@@ -36,8 +37,7 @@ class ProgressScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        backgroundColor:
-            const Color.fromARGB(255, 93, 164, 157).withValues(alpha: 0.5),
+        backgroundColor: const Color.fromARGB(255, 93, 164, 157).withAlpha(128),
         elevation: 0,
         title: const Text(
           "Progress Screen",
@@ -48,42 +48,14 @@ class ProgressScreen extends StatelessWidget {
             color: Color.fromARGB(255, 43, 113, 105),
           ),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white.withValues(alpha: 0.15),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(50),
-                ),
-              ),
-              onPressed: () {
-                FirebaseAuth.instance.signOut();
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                  (route) => false,
-                );
-              },
-              child: const Text("Logout",
-                style: TextStyle(
-                    fontFamily: 'Poppins',
-                    color: Color.fromARGB(255, 8, 67, 82),
-                    ),
-              ),
-            ),
-          ),
-        ],
       ),
       body: Stack(
         fit: StackFit.expand,
         children: [
           Image.asset('assets/images/Login.jpg', fit: BoxFit.cover),
-          Container(color: Colors.black.withValues(alpha: 0.5)),
+          Container(color: Colors.black.withOpacity(0.5)),
           Column(
             children: [
-              // StreamBuilder for weeks data
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
@@ -114,7 +86,7 @@ class ProgressScreen extends StatelessWidget {
                         final week = weeks[index];
                         return Card(
                           margin: const EdgeInsets.symmetric(vertical: 8.0),
-                          color: Colors.white.withValues(alpha: 0.8),
+                          color: Colors.white.withOpacity(0.85),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -127,10 +99,8 @@ class ProgressScreen extends StatelessWidget {
                               ),
                             ),
                             subtitle: Text(
-                              week.status,
-                              style: const TextStyle(
-                                color: Colors.black87,
-                              ),
+                              _formatStatusLabel(week.status),
+                              style: const TextStyle(color: Colors.black87),
                             ),
                             leading: _getStatusIcon(week.status),
                             trailing: const Icon(Icons.arrow_forward_ios),
@@ -149,32 +119,34 @@ class ProgressScreen extends StatelessWidget {
                   },
                 ),
               ),
-
-              // // ElevatedButton for logout at the bottom
-              // Padding(
-              //   padding: const EdgeInsets.all(16.0),
-              //   child: ElevatedButton(
-              //     onPressed: () {
-              //       // Sign out the user and navigate to the login screen
-              //       FirebaseAuth.instance.signOut();
-
-              //       // Navigate to the login screen and clear the navigation stack
-              //       Navigator.of(context).pushAndRemoveUntil(
-              //         MaterialPageRoute(
-              //           builder: (context) => const LoginScreen(),
-              //         ),
-              //         (route) => false,
-              //       );
-              //     },
-              //     child: const Text(
-              //       "Logout",
-              //       style: TextStyle(
-              //         fontFamily: 'Poppins',
-              //         color: Color.fromARGB(255, 8, 67, 82),
-              //       ),
-              //     ),
-              //   ),
-              // ),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white.withAlpha(38),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                  ),
+                  onPressed: () {
+                    FirebaseAuth.instance.signOut();
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                          builder: (context) => const LoginScreen()),
+                      (route) => false,
+                    );
+                  },
+                  child: const Text(
+                    "Logout",
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ],
@@ -182,22 +154,33 @@ class ProgressScreen extends StatelessWidget {
     );
   }
 
+  String _formatStatusLabel(String status) {
+    switch (status.toLowerCase()) {
+      case "available":
+        return "Available";
+      case "completed":
+        return "Completed";
+      case "locked":
+        return "Locked";
+      case "in progress":
+        return "In Progress";
+      default:
+        return status;
+    }
+  }
+
   Widget _getStatusIcon(String status) {
-    switch (status) {
-      case "Available but incomplete":
+    switch (status.toLowerCase()) {
+      case "available":
         return const Icon(Icons.check_circle_outline, color: Colors.orange);
-      case "Partially completed (in progress)":
+      case "in progress":
         return const Icon(Icons.hourglass_top_outlined, color: Colors.blue);
-      case "Available but not started":
-        return const Icon(Icons.circle_outlined, color: Colors.grey);
-      case "Locked":
+      case "completed":
+        return const Icon(Icons.check_circle, color: Colors.green);
+      case "locked":
         return const Icon(Icons.lock, color: Colors.red);
-      case "Unavailable":
-        return const Icon(Icons.block, color: Colors.black);
       default:
         return const Icon(Icons.help_outline);
     }
   }
-  
-
 }

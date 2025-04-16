@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'progress_screen.dart';
 import 'login_screen.dart';
+import 'progress_screen.dart';
 
 class WeekScreen extends StatefulWidget {
   final Week week;
@@ -34,11 +34,11 @@ class _WeekScreenState extends State<WeekScreen> {
       appBar: AppBar(
         centerTitle: true,
         backgroundColor:
-            const Color.fromARGB(255, 93, 164, 157).withValues(alpha: 0.5),
+            const Color.fromARGB(255, 93, 164, 157).withOpacity(0.5),
         elevation: 0,
         title: Text(
           widget.week.label,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w600,
             color: Color.fromARGB(255, 43, 113, 105),
@@ -49,7 +49,7 @@ class _WeekScreenState extends State<WeekScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white.withValues(alpha: 0.15),
+                backgroundColor: Colors.white.withOpacity(0.15),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(50),
@@ -62,11 +62,12 @@ class _WeekScreenState extends State<WeekScreen> {
                   (route) => false,
                 );
               },
-              child: const Text("Logout",
+              child: const Text(
+                "Logout",
                 style: TextStyle(
                   fontFamily: 'Poppins',
-                    color: Color.fromARGB(255, 8, 67, 82),
-                    ),
+                  color: Color.fromARGB(255, 8, 67, 82),
+                ),
               ),
             ),
           ),
@@ -75,155 +76,147 @@ class _WeekScreenState extends State<WeekScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background image
-          Image.asset(
-            'assets/images/Login.jpg', // Change to your actual path
-            fit: BoxFit.cover,
-          ),
-          // Semi-transparent overlay
-          Container(color: Colors.black.withValues(alpha: 0.5)),
+          Image.asset('assets/images/Login.jpg', fit: BoxFit.cover),
+          Container(color: Colors.black.withOpacity(0.5)),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _weeklyContentRef.orderBy('order').snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-          // Content on top of background
-          StreamBuilder<QuerySnapshot>(
-            stream: _weeklyContentRef.orderBy('order').snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
+                final contentDocs = snapshot.data!.docs;
+                if (contentDocs.isEmpty) {
+                  return const Center(
+                    child: Text("No content available.",
+                        style: TextStyle(color: Colors.white)),
+                  );
+                }
 
-              final contentDocs = snapshot.data!.docs;
-              if (contentDocs.isEmpty) {
-                return const Center(
-                  child: Text("No content available.",
-                      style: TextStyle(color: Colors.white)),
+                return ListView.builder(
+                  itemCount: contentDocs.length,
+                  itemBuilder: (context, index) {
+                    final doc = contentDocs[index];
+                    final data = doc.data() as Map<String, dynamic>;
+                    final description = data['description'] ?? 'No description';
+                    final question = data['question'] ?? '';
+                    final contentId = doc.id;
+
+                    return _buildContentCard(description, question, contentId);
+                  },
                 );
-              }
-
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: contentDocs.length,
-                itemBuilder: (context, index) {
-                  final data =
-                      contentDocs[index].data() as Map<String, dynamic>;
-                  final type = data['type'];
-                  final content = data['content'];
-                  final status = data['status'];
-                  final contentId = contentDocs[index].id;
-
-                  return type == 'question'
-                      ? _buildQuestionTile(content, status, contentId)
-                      : _buildMeditationTile(content, status, contentId);
-                },
-              );
-            },
+              },
+            ),
           ),
         ],
       ),
     );
   }
 
-  // Simplified code for handling question type content
-  Widget _buildQuestionTile(String content, String status, String contentId) {
-    TextEditingController _answerController = TextEditingController();
+  Widget _buildContentCard(
+      String description, String question, String sessionId) {
+    final TextEditingController _responseController = TextEditingController();
+    final _formKey = GlobalKey<FormState>(); // ✅ Moved here
+    final sessionDoc = _firestore
+        .collection('Users')
+        .doc(_userId)
+        .collection('Progress')
+        .doc(sessionId);
 
-    // Fetch user's answer if available
-    _firestore
-        .collection('Weeks')
-        .doc(widget.week.id)
-        .collection('WeeklyContent')
-        .doc(contentId)
-        .collection('Answers')
-        .doc(_userId) // Use the current user's UID
-        .get()
-        .then((doc) {
-      if (doc.exists) {
-        _answerController.text = doc['answer'];
+    return FutureBuilder<DocumentSnapshot>(
+      future: sessionDoc.get(),
+      builder: (context, snapshot) {
+        final responseData =
+            snapshot.data?.data() as Map<String, dynamic>? ?? {};
+        final previousAnswer = responseData['response'] ?? '';
+        final hasSubmitted = previousAnswer.toString().trim().isNotEmpty;
+
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 10),
+          color: Colors.white.withOpacity(0.85),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(description,
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  Text(question, style: const TextStyle(fontSize: 14)),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _responseController,
+                    maxLines: 4,
+                    enabled: !hasSubmitted,
+                    decoration: const InputDecoration(
+                      labelText: "Your Response",
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter a response';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  if (!hasSubmitted)
+                    ElevatedButton(
+                      onPressed: () async {
+                        if (_formKey.currentState!.validate()) {
+                          final responseText = _responseController.text.trim();
+
+                          await sessionDoc.set({
+                            'response': responseText,
+                            'timestamp': FieldValue.serverTimestamp(),
+                          });
+
+                          // Unlock the next week
+                          final nextWeekId = _getNextWeekId(widget.week.id);
+                          if (nextWeekId != null) {
+                            final nextWeekRef =
+                                _firestore.collection('Weeks').doc(nextWeekId);
+                            final nextDoc = await nextWeekRef.get();
+
+                            if (nextDoc.exists &&
+                                (nextDoc['status'] == 'unavailable')) {
+                              await nextWeekRef
+                                  .update({'status': 'available but locked'});
+                            }
+                          }
+
+                          setState(() {}); // Refresh the UI
+                        }
+                      },
+                      child: const Text("Submit"),
+                    ),
+                  if (hasSubmitted)
+                    const Text("✔ Response submitted",
+                        style: TextStyle(color: Colors.green)),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String? _getNextWeekId(String currentWeekId) {
+    final match = RegExp(r'week(\d+)').firstMatch(currentWeekId.toLowerCase());
+    if (match != null) {
+      final currentWeekNum = int.tryParse(match.group(1) ?? '');
+      if (currentWeekNum != null) {
+        return 'week${currentWeekNum + 1}';
       }
-    });
-
-    return Card(
-      margin: const EdgeInsets.all(8),
-      child: ListTile(
-        title: const Text("Question"),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(content),
-            if (status != 'complete') ...[
-              TextField(
-                controller: _answerController,
-                decoration: const InputDecoration(labelText: 'Your answer'),
-                maxLines: 3,
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  // Save the user's answer to Firestore under their UID
-                  await _firestore
-                      .collection('Weeks')
-                      .doc(widget.week.id)
-                      .collection('WeeklyContent')
-                      .doc(contentId)
-                      .collection('Answers')
-                      .doc(_userId) // Use the current user's UID
-                      .set({
-                    'answer': _answerController.text,
-                    'timestamp': FieldValue.serverTimestamp(),
-                  });
-
-                  // Update status to 'complete'
-                  await _firestore
-                      .collection('Weeks')
-                      .doc(widget.week.id)
-                      .collection('WeeklyContent')
-                      .doc(contentId)
-                      .update({'status': 'complete'});
-                },
-                child: const Text('Submit Answer'),
-              ),
-            ],
-          ],
-        ),
-        trailing: Icon(
-          status == 'complete' ? Icons.check : Icons.radio_button_unchecked,
-          color: status == 'complete' ? Colors.green : Colors.grey,
-        ),
-      ),
-    );
+    }
+    return null;
   }
-
-  // Simplified code for handling meditation type content
-  Widget _buildMeditationTile(String content, String status, String contentId) {
-    return Card(
-      margin: const EdgeInsets.all(8),
-      child: ListTile(
-        title: const Text("Meditation"),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(content),
-            if (status != 'complete') ...[
-              ElevatedButton(
-                onPressed: () async {
-                  // Mark meditation as complete when "Done" is clicked
-                  await _firestore
-                      .collection('Weeks')
-                      .doc(widget.week.id)
-                      .collection('WeeklyContent')
-                      .doc(contentId)
-                      .update({'status': 'complete'});
-                },
-                child: const Text('Done'),
-              ),
-            ],
-          ],
-        ),
-        trailing: Icon(
-          status == 'complete' ? Icons.check : Icons.radio_button_unchecked,
-          color: status == 'complete' ? Colors.green : Colors.grey,
-        ),
-      ),
-    );
-  }
-  
-
 }
