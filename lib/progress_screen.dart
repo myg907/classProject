@@ -30,6 +30,7 @@ class Week {
     );
   }
 }
+
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
 
@@ -42,7 +43,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   final List<Widget> pages = [
     const ProgressContentScreen(),
-    const SearchScreen(), 
+    const SearchScreen(),
     const ProfileScreen(),
   ];
 
@@ -59,14 +60,14 @@ class _ProgressScreenState extends State<ProgressScreen> {
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search Week'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.search), label: 'Search Week'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
     );
   }
 }
-
 
 class ProgressContentScreen extends StatelessWidget {
   const ProgressContentScreen({super.key});
@@ -93,7 +94,7 @@ class ProgressContentScreen extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           Image.asset('assets/images/Login.jpg', fit: BoxFit.cover),
-          Container(color: Colors.black.withOpacity(0.5)),
+          Container(color: Colors.black.withValues(alpha: 0.5)),
           Padding(
             padding: const EdgeInsets.only(top: kToolbarHeight),
             child: Column(
@@ -116,11 +117,11 @@ class ProgressContentScreen extends StatelessWidget {
                           ),
                         );
                       }
-            
+
                       final weeks = snapshot.data!.docs
                           .map((doc) => Week.fromDocument(doc))
                           .toList();
-            
+
                       return ListView.builder(
                         padding: const EdgeInsets.all(16.0),
                         itemCount: weeks.length,
@@ -128,7 +129,7 @@ class ProgressContentScreen extends StatelessWidget {
                           final week = weeks[index];
                           return Card(
                             margin: const EdgeInsets.symmetric(vertical: 8.0),
-                            color: Colors.white.withOpacity(0.85),
+                            color: Colors.white.withValues(alpha: 0.85),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -150,7 +151,8 @@ class ProgressContentScreen extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => WeekScreen(week: week),
+                                    builder: (context) =>
+                                        WeekScreen(week: week),
                                   ),
                                 );
                               },
@@ -162,29 +164,53 @@ class ProgressContentScreen extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white.withAlpha(38),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(50),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white.withAlpha(38),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                        ),
+                        onPressed: () {
+                          FirebaseAuth.instance.signOut();
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                                builder: (context) => const LoginScreen()),
+                            (route) => false,
+                          );
+                        },
+                        child: const Text(
+                          "Logout",
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
-                    ),
-                    onPressed: () {
-                      FirebaseAuth.instance.signOut();
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (context) => const LoginScreen()),
-                        (route) => false,
-                      );
-                    },
-                    child: const Text(
-                      "Logout",
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        color: Colors.white,
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white.withAlpha(38),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                        ),
+                        onPressed: () => resetUserProgress(context),
+                        child: const Text(
+                          "Reset Progress",
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ],
@@ -193,6 +219,49 @@ class ProgressContentScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void resetUserProgress(BuildContext context) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    final firestore = FirebaseFirestore.instance;
+
+    try {
+      // Reset status in the Weeks collection
+      final weeksSnapshot =
+          await firestore.collection('Weeks').orderBy('order').get();
+      for (int i = 0; i < weeksSnapshot.docs.length; i++) {
+        final weekDoc = weeksSnapshot.docs[i];
+        final newStatus = (i == 0) ? 'availableIncomplete' : 'unavailable';
+        await weekDoc.reference.update({'status': newStatus});
+      }
+
+      // Delete Progress documents under the current user
+      final progressRef =
+          firestore.collection('Users').doc(userId).collection('Progress');
+      final progressDocs = await progressRef.get();
+      for (final doc in progressDocs.docs) {
+        await doc.reference.delete();
+      }
+
+      // Show confirmation
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Progress has been reset."),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Failed to reset: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   String _formatStatusLabel(String status) {
@@ -225,4 +294,3 @@ class ProgressContentScreen extends StatelessWidget {
     }
   }
 }
-
