@@ -125,23 +125,53 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: pages[currentPage],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentPage,
-        onTap: (value) {
-          setState(() {
-            currentPage = value;
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search Week'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
+  return Scaffold(
+    backgroundColor: Colors.transparent, // make scaffold transparent
+    extendBody: true, // extend body behind bottomNavigationBar
+    body: Stack(
+      children: [
+        // Background image
+        Positioned.fill(
+          child: Image.asset(
+            'assets/images/Login.jpg', 
+            fit: BoxFit.cover,
+          ),
+        ),
+        // Your actual pages
+        pages[currentPage],
+      ],
+    ),
+    bottomNavigationBar: BottomNavigationBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      type: BottomNavigationBarType.fixed,
+      selectedLabelStyle: const TextStyle(
+        fontFamily: 'Poppins',
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
       ),
-    );
-  }
+      unselectedLabelStyle: const TextStyle(
+        fontFamily: 'Poppins',
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+      ),
+      selectedItemColor: Color.fromARGB(255, 43, 113, 105),
+      unselectedItemColor: Colors.grey,
+      currentIndex: currentPage,
+      onTap: (value) {
+        setState(() {
+          currentPage = value;
+        });
+      },
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search Week'),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+      ],
+    ),
+  );
+}
+
 }
 
 class ProgressContentScreen extends StatefulWidget {
