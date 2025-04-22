@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
 import 'progress_screen.dart';
+import 'survey_screen.dart';
 
 class WeekScreen extends StatefulWidget {
   final Week week;
@@ -26,6 +27,42 @@ class _WeekScreenState extends State<WeekScreen> {
         .collection('Weeks')
         .doc(widget.week.id)
         .collection('WeeklyContent');
+  }
+
+  Future<bool> _isSurveyRequiredAndIncomplete(String weekId) async {
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+    final firestore = FirebaseFirestore.instance;
+
+    final surveyId = {
+      'week1': 'week1_start',
+      'week4': 'week4_start',
+      'week6': 'week6_start',
+      'week8': 'week8_complete',
+    }[weekId];
+
+    if (surveyId == null) return false;
+
+    final progressDoc = await firestore
+        .collection('Users')
+        .doc(userId)
+        .collection('SurveyProgress')
+        .doc(surveyId)
+        .get();
+
+    if (progressDoc.exists) return false;
+
+    final surveyDoc = await firestore.collection('Surveys').doc(surveyId).get();
+
+    if (!surveyDoc.exists) return false;
+
+    // Show modal survey screen
+    final completed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => SurveyScreen(surveyId: surveyId),
+    );
+
+    return completed != true; // true if STILL incomplete
   }
 
   @override
@@ -170,6 +207,22 @@ class _WeekScreenState extends State<WeekScreen> {
                   if (!hasSubmitted)
                     ElevatedButton(
                       onPressed: () async {
+                        // 1. Check if the survey must be completed before allowing submission
+                        final isBlocked = await _isSurveyRequiredAndIncomplete(
+                            widget.week.id);
+
+                        if (isBlocked) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                  "Cannot submit response until survey is complete."),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
+
+                        // 2. Continue with normal validation + submission logic
                         if (_formKey.currentState!.validate()) {
                           final responseText = _responseController.text.trim();
 
@@ -192,7 +245,40 @@ class _WeekScreenState extends State<WeekScreen> {
                             }
                           }
 
-                          setState(() {}); // Refresh the UI
+                          // Check if all sessions in this week are submitted
+                          final weekContentSnapshot =
+                              await _weeklyContentRef.get();
+                          int submittedCount = 0;
+
+                          for (final session in weekContentSnapshot.docs) {
+                            final sessionProgress = await _firestore
+                                .collection('Users')
+                                .doc(_userId)
+                                .collection('Progress')
+                                .doc(session.id)
+                                .get();
+
+                            final response =
+                                sessionProgress.data()?['response'] ?? '';
+                            if (response.toString().trim().isNotEmpty) {
+                              submittedCount++;
+                            }
+                          }
+
+                          final weekProgressRef = _firestore
+                              .collection('Users')
+                              .doc(_userId)
+                              .collection('WeekProgress')
+                              .doc(widget.week.id);
+
+                          if (submittedCount ==
+                              weekContentSnapshot.docs.length) {
+                            await weekProgressRef.set({'status': 'completed'});
+                          } else {
+                            await weekProgressRef.set({'status': 'inProgress'});
+                          }
+
+                          setState(() {}); // Refresh UI
                         }
                       },
                       child: const Text("Submit"),
