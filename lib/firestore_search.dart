@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'week_screen.dart';
 import 'progress_screen.dart';
 
+
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
@@ -13,77 +14,120 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _controller = TextEditingController();
   final peopleRef = FirebaseFirestore.instance.collection('Weeks');
-
   List<QueryDocumentSnapshot> searchResults = [];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Search Weeks")),
-      body: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          children: [
-            TextField(
-              controller: _controller,
-              decoration: const InputDecoration(
-                hintText: "Enter a week label", // clearer hint
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (value) {
-                print('Week searched for is: $value');
-
-                peopleRef
-                    .where("label", isEqualTo: value)  // <-- CORRECT field name
-                    .get()
-                    .then((result) {
-                  setState(() => searchResults = result.docs);
-                }).catchError((error) {
-                  print('Error searching: $error');
-                });
-              },
-            ),
-            const SizedBox(height: 20),
-            Expanded(child: _getBodyContent()),
-          ],
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          "Search Weeks",
+          style: TextStyle(
+            fontSize: 22,
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w600,
+            color: Color.fromARGB(255, 43, 113, 105),
+          ),
         ),
+      ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset('assets/images/Login.jpg', fit: BoxFit.cover),
+          Container(color: Colors.black.withOpacity(0.5)),
+          Padding(
+            padding: const EdgeInsets.only(
+              top: kToolbarHeight + 24,
+              left: 8,
+              right: 8,
+            ),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _controller,
+                  decoration: InputDecoration(
+                    hintText: "Enter a week label",
+                    hintStyle: const TextStyle(color: Colors.white70),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.3),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                  onChanged: (value) {
+                    if (value.isEmpty) {
+                      setState(() => searchResults = []);
+                      return;
+                    }
+
+                    peopleRef
+                        .where("label", isEqualTo: value)
+                        .get()
+                        .then((result) {
+                      setState(() => searchResults = result.docs);
+                    }).catchError((error) {
+                      print('Error searching: $error');
+                    });
+                  },
+                ),
+                const SizedBox(height: 20),
+                Expanded(child: _getBodyContent()),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _getBodyContent() {
     if (_controller.text.isEmpty) {
-      return const Center(child: Text('Enter a search term to see results.'));
+      return const Center(
+        child: Text(
+          'Enter a search term to see results.',
+          style: TextStyle(color: Colors.white70),
+        ),
+      );
     }
 
     if (searchResults.isEmpty) {
-      return const Center(child: Text('Your search did not find anything.'));
+      return const Center(
+        child: Text(
+          'Your search did not find anything.',
+          style: TextStyle(color: Colors.white70),
+        ),
+      );
     }
 
     return ListView.builder(
-  itemCount: searchResults.length,
-  itemBuilder: (context, index) {
-    final doc = searchResults[index];
-
-    return ListTile(
-      tileColor: index % 2 == 0 ? Colors.blue[100] : Colors.blueAccent,
-      leading: const Icon(Icons.bookmark, size: 32),
-      title: Text("${doc.get('label')}"),
-      subtitle: Text("Order: ${doc.get('order')}"),
-      trailing: Text("${doc.get('status')}"),
-      onTap: () {
-        final week = Week.fromDocument(doc);
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => WeekScreen(week: week),
+      itemCount: searchResults.length,
+      itemBuilder: (context, index) {
+        final doc = searchResults[index];
+        return Card(
+          color: Colors.white.withOpacity(0.8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: ListTile(
+            leading: const Icon(Icons.bookmark, size: 32, color: Colors.teal),
+            title: Text(doc.get('label')),
+            subtitle: Text("Order: ${doc.get('order')}"),
+            trailing: Text(doc.get('status')),
+            onTap: () {
+              final week = Week.fromDocument(doc);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => WeekScreen(week: week),
+                ),
+              );
+            },
           ),
         );
       },
     );
-  },
-);
-
   }
 }
-

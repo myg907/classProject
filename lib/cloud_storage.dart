@@ -13,11 +13,8 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // State variable that will refer to the profile image location.
   String? imageFile;
-
-  // Get a reference to the storage bucket in the cloud
-  var storageRef = FirebaseStorage.instance.ref();
+  final storageRef = FirebaseStorage.instance.ref();
 
   @override
   void initState() {
@@ -25,81 +22,104 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _getFileUrl();
   }
 
-  // Load the user's profile if it exists
-  _getFileUrl() async {
+  Future<void> _getFileUrl() async {
     try {
       ListResult result = await storageRef.child('profilepics').listAll();
       String uid = FirebaseAuth.instance.currentUser!.uid;
       for (Reference ref in result.items) {
-        print(ref.name);
-        if (ref.name.startsWith("$uid")) {
-          imageFile = await ref.getDownloadURL();
-          setState(() {});
+        if (ref.name.startsWith(uid)) {
+          final url = await ref.getDownloadURL();
+          setState(() {
+            imageFile = url;
+          });
+          break;
         }
       }
     } on FirebaseException catch (e) {
-      print("BAD");
+      print("Error fetching profile image: ${e.message}");
+    }
+  }
+
+  Future<void> _getImage(ImageSource source) async {
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: source);
+
+    if (image != null) {
+      try {
+        String uid = FirebaseAuth.instance.currentUser!.uid;
+        String extension = image.path.split('.').last;
+        final profileImageRef = storageRef.child("profilepics/$uid.$extension");
+
+        await profileImageRef.putFile(File(image.path));
+        final url = await profileImageRef.getDownloadURL();
+
+        setState(() {
+          imageFile = url;
+        });
+      } on FirebaseException catch (e) {
+        print("Failed uploading image: ${e.message}");
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Profile")),
-      body: Column(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          "Your Profile",
+          style: TextStyle(
+            fontSize: 22,
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w600,
+            color: Color.fromARGB(255, 43, 113, 105),
+          ),
+        ),
+      ),
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          if (imageFile == null) const Icon(Icons.account_circle, size: 72),
-          // if (imageFile != null) Image.file(File(imageFile!), width: 250),
-          if (imageFile != null) Image.network(imageFile!, width: 250),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ElevatedButton(
-                  onPressed: () => _getImage(ImageSource.camera),
-                  child: const Text("Camera")),
-              ElevatedButton(
-                  onPressed: () => _getImage(ImageSource.gallery),
-                  child: const Text("Gallery")),
-            ],
-          )
+          Image.asset('assets/images/Login.jpg', fit: BoxFit.cover),
+          Container(color: Colors.black.withOpacity(0.5)),
+          Padding(
+            padding: const EdgeInsets.only(top: kToolbarHeight + 24), // a little below the AppBar
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                if (imageFile == null)
+                  const Icon(Icons.account_circle, size: 120, color: Colors.white)
+                else
+                  ClipOval(
+                    child: Image.network(
+                      imageFile!,
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () => _getImage(ImageSource.camera),
+                      child: const Text("Camera"),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => _getImage(ImageSource.gallery),
+                      child: const Text("Gallery"),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
-  }
-
-  _getImage(ImageSource source) async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: source);
-    if (image != null) {
-      print(image.path);
-
-      // setState(() => imageFile = image.path);
-
-      // Goal: rename the file to the user's ID.jpg
-      // Extract the image file extension
-      String fileExtension = '';
-      int period = image.path.lastIndexOf('.');
-      if (period > -1) {
-        fileExtension = image.path.substring(period);
-      }
-
-      // Specify a filename that will be something like
-      // <ourbucket>/profilepics/SOAIHFiug8sair.jpg (user's uid)
-      String uid = FirebaseAuth.instance.currentUser!.uid;
-      final profileImageRef =
-          storageRef.child("profilepics/${uid}$fileExtension");
-
-      try {
-        // upload the image file
-        await profileImageRef.putFile(File(image.path));
-
-        //Get a public url that we can download the image from
-        imageFile = await profileImageRef.getDownloadURL();
-        setState(() {});
-      } on FirebaseException catch (e) {
-        // Caught an exception from Firebase
-        print("Failed with error ${e.message}");
-      }
-    }
   }
 }
