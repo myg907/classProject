@@ -35,13 +35,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextFormField(
                       decoration: InputDecoration(
                         hintText: 'Enter your email',
-                        fillColor: Colors.white,
+                        hintStyle: const TextStyle(color: Colors.white70),
                         filled: true,
+                        fillColor: Colors.white.withOpacity(0.3),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
                       ),
+                      style: const TextStyle(color: Colors.white),
                       onChanged: (value) => email = value,
                       validator: (value) => value == null || value.isEmpty
                           ? 'Enter an email'
@@ -50,15 +52,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 12),
                     TextFormField(
                       decoration: InputDecoration(
-                        hintText: "Enter a password",
-                        fillColor: Colors.white,
+                        hintText: 'Enter your password',
+                        hintStyle: const TextStyle(color: Colors.white70),
                         filled: true,
+                        fillColor: Colors.white.withOpacity(0.3),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
                       ),
                       obscureText: true,
+                      style: const TextStyle(color: Colors.white),
                       onChanged: (value) => password = value,
                       validator: (value) {
                         if (value == null || value.length < 8) {

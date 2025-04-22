@@ -155,8 +155,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
         fontSize: 12,
         fontWeight: FontWeight.w400,
       ),
-      selectedItemColor: Color.fromARGB(255, 43, 113, 105),
-      unselectedItemColor: Colors.grey,
+      selectedItemColor: Color.fromARGB(255, 73, 126, 120),
+      unselectedItemColor: const Color.fromARGB(255, 251, 249, 249),
       currentIndex: currentPage,
       onTap: (value) {
         setState(() {
@@ -323,7 +323,7 @@ class _ProgressContentScreenState extends State<ProgressContentScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text(
-          "Progress Screen",
+          "Your Progress",
           style: TextStyle(
             fontSize: 22,
             fontFamily: 'Poppins',

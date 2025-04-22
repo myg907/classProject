@@ -68,18 +68,19 @@ class _WeekScreenState extends State<WeekScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        centerTitle: true,
-        backgroundColor:
-            const Color.fromARGB(255, 93, 164, 157).withValues(alpha: 0.5),
-        elevation: 0,
-        title: Text(
-          widget.week.label,
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w600,
-            color: Color.fromARGB(255, 43, 113, 105),
-          ),
+          centerTitle: true,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: const Text(
+            "This Week",
+            style: TextStyle(
+              fontSize: 22,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w600,
+              color: Color.fromARGB(255, 181, 184, 184),
+            ),
         ),
         actions: [
           Padding(
@@ -103,7 +104,7 @@ class _WeekScreenState extends State<WeekScreen> {
                 "Logout",
                 style: TextStyle(
                   fontFamily: 'Poppins',
-                  color: Color.fromARGB(255, 8, 67, 82),
+                  color: Color.fromARGB(255, 236, 237, 238),
                 ),
               ),
             ),

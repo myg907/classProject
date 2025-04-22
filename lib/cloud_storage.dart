@@ -103,18 +103,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 const SizedBox(height: 20),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () => _getImage(ImageSource.camera),
-                      child: const Text("Camera"),
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white.withOpacity(0.15),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(50),
+                      ),
                     ),
-                    ElevatedButton(
-                      onPressed: () => _getImage(ImageSource.gallery),
-                      child: const Text("Gallery"),
+                    onPressed: () => _getImage(ImageSource.camera),
+                    child: const Text("Camera"),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white.withOpacity(0.15),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(50),
+                      ),
                     ),
-                  ],
-                ),
+                    onPressed: () => _getImage(ImageSource.gallery),
+                    child: const Text("Gallery"),
+                  ),
+                ],
+              ),
+
               ],
             ),
           ),
