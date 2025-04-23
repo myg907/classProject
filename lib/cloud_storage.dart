@@ -84,14 +84,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         fit: StackFit.expand,
         children: [
           Image.asset('assets/images/Login.jpg', fit: BoxFit.cover),
-          Container(color: Colors.black.withOpacity(0.5)),
+          Container(color: Colors.black.withValues(alpha: 0.5)),
           Padding(
-            padding: const EdgeInsets.only(top: kToolbarHeight + 24), // a little below the AppBar
+            padding: const EdgeInsets.only(
+                top: kToolbarHeight + 24), // a little below the AppBar
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 if (imageFile == null)
-                  const Icon(Icons.account_circle, size: 120, color: Colors.white)
+                  const Icon(Icons.account_circle,
+                      size: 120, color: Colors.white)
                 else
                   ClipOval(
                     child: Image.network(
@@ -103,33 +105,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 const SizedBox(height: 20),
                 Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.15),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(50),
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: .15),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50),
+                        ),
                       ),
+                      onPressed: () => _getImage(ImageSource.camera),
+                      child: const Text("Camera"),
                     ),
-                    onPressed: () => _getImage(ImageSource.camera),
-                    child: const Text("Camera"),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.15),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(50),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: .15),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50),
+                        ),
                       ),
+                      onPressed: () => _getImage(ImageSource.gallery),
+                      child: const Text("Gallery"),
                     ),
-                    onPressed: () => _getImage(ImageSource.gallery),
-                    child: const Text("Gallery"),
-                  ),
-                ],
-              ),
-
+                  ],
+                ),
               ],
             ),
           ),

@@ -125,53 +125,53 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   @override
   Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: Colors.transparent, // make scaffold transparent
-    extendBody: true, // extend body behind bottomNavigationBar
-    body: Stack(
-      children: [
-        // Background image
-        Positioned.fill(
-          child: Image.asset(
-            'assets/images/Login.jpg', 
-            fit: BoxFit.cover,
+    return Scaffold(
+      backgroundColor: Colors.transparent, // make scaffold transparent
+      extendBody: true, // extend body behind bottomNavigationBar
+      body: Stack(
+        children: [
+          // Background image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/Login.jpg',
+              fit: BoxFit.cover,
+            ),
           ),
+          // Your actual pages
+          pages[currentPage],
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        type: BottomNavigationBarType.fixed,
+        selectedLabelStyle: const TextStyle(
+          fontFamily: 'Poppins',
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
         ),
-        // Your actual pages
-        pages[currentPage],
-      ],
-    ),
-    bottomNavigationBar: BottomNavigationBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      type: BottomNavigationBarType.fixed,
-      selectedLabelStyle: const TextStyle(
-        fontFamily: 'Poppins',
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
+        unselectedLabelStyle: const TextStyle(
+          fontFamily: 'Poppins',
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+        ),
+        selectedItemColor: Color.fromARGB(255, 73, 126, 120),
+        unselectedItemColor: const Color.fromARGB(255, 251, 249, 249),
+        currentIndex: currentPage,
+        onTap: (value) {
+          setState(() {
+            currentPage = value;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.search), label: 'Search Week'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ],
       ),
-      unselectedLabelStyle: const TextStyle(
-        fontFamily: 'Poppins',
-        fontSize: 12,
-        fontWeight: FontWeight.w400,
-      ),
-      selectedItemColor: Color.fromARGB(255, 73, 126, 120),
-      unselectedItemColor: const Color.fromARGB(255, 251, 249, 249),
-      currentIndex: currentPage,
-      onTap: (value) {
-        setState(() {
-          currentPage = value;
-        });
-      },
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search Week'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-      ],
-    ),
-  );
-}
-
+    );
+  }
 }
 
 class ProgressContentScreen extends StatefulWidget {
@@ -354,8 +354,13 @@ class _ProgressContentScreenState extends State<ProgressContentScreen> {
 
                       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                         return const Center(
-                          child: Text("No weeks found.",
-                              style: TextStyle(color: Colors.white)),
+                          child: Text(
+                            "No weeks found.",
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              color: Colors.white,
+                            ),
+                          ),
                         );
                       }
 
@@ -384,7 +389,8 @@ class _ProgressContentScreenState extends State<ProgressContentScreen> {
                                 child: ListTile(
                                   title: Text(
                                     week.label,
-                                    style: const TextStyle(
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
                                       fontWeight: FontWeight.bold,
                                       color: Color.fromARGB(255, 43, 113, 105),
                                     ),
@@ -432,32 +438,55 @@ class _ProgressContentScreenState extends State<ProgressContentScreen> {
                     },
                   ),
                 ),
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          FirebaseAuth.instance.signOut();
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                              builder: (context) => const LoginScreen(),
+                SafeArea(
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                Colors.white.withValues(alpha: 0.15),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50),
                             ),
-                            (route) => false,
-                          );
-                        },
-                        child: const Text("Logout"),
-                      ),
-                      ElevatedButton(
-                        onPressed: () async {
-                          await widget.onReset();
-                          _refresh(); // refresh screen after reset
-                        },
-                        child: const Text("Reset Progress"),
-                      ),
-                    ],
+                          ),
+                          onPressed: () {
+                            FirebaseAuth.instance.signOut();
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                  builder: (context) => const LoginScreen()),
+                              (route) => false,
+                            );
+                          },
+                          child: const Text(
+                            "Logout",
+                            style: TextStyle(fontFamily: 'Poppins'),
+                          ),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                Colors.white.withValues(alpha: 0.15),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                          ),
+                          onPressed: () async {
+                            await widget.onReset();
+                            _refresh();
+                          },
+                          child: const Text(
+                            "Reset Progress",
+                            style: TextStyle(fontFamily: 'Poppins'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 )
               ],

@@ -37,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         hintText: 'Enter your email',
                         hintStyle: const TextStyle(color: Colors.white70),
                         filled: true,
-                        fillColor: Colors.white.withOpacity(0.3),
+                        fillColor: Colors.white.withValues(alpha: 0.3),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -55,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         hintText: 'Enter your password',
                         hintStyle: const TextStyle(color: Colors.white70),
                         filled: true,
-                        fillColor: Colors.white.withOpacity(0.3),
+                        fillColor: Colors.white.withValues(alpha: 0.3),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,

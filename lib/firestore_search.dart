@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'week_screen.dart';
 import 'progress_screen.dart';
 
-
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
@@ -38,7 +37,7 @@ class _SearchScreenState extends State<SearchScreen> {
         fit: StackFit.expand,
         children: [
           Image.asset('assets/images/Login.jpg', fit: BoxFit.cover),
-          Container(color: Colors.black.withOpacity(0.5)),
+          Container(color: Colors.black.withValues(alpha: .5)),
           Padding(
             padding: const EdgeInsets.only(
               top: kToolbarHeight + 24,
@@ -53,7 +52,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     hintText: "Enter a week label",
                     hintStyle: const TextStyle(color: Colors.white70),
                     filled: true,
-                    fillColor: Colors.white.withOpacity(0.3),
+                    fillColor: Colors.white.withValues(alpha: 0.3),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -109,8 +108,9 @@ class _SearchScreenState extends State<SearchScreen> {
       itemBuilder: (context, index) {
         final doc = searchResults[index];
         return Card(
-          color: Colors.white.withOpacity(0.8),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          color: Colors.white.withValues(alpha: .8),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: ListTile(
             leading: const Icon(Icons.bookmark, size: 32, color: Colors.teal),
             title: Text(doc.get('label')),

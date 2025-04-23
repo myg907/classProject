@@ -29,6 +29,17 @@ class _WeekScreenState extends State<WeekScreen> {
         .collection('WeeklyContent');
   }
 
+  String? _getPreviousWeekId(String currentWeekId) {
+    final match = RegExp(r'week(\d+)').firstMatch(currentWeekId.toLowerCase());
+    if (match != null) {
+      final currentWeekNum = int.tryParse(match.group(1) ?? '');
+      if (currentWeekNum != null && currentWeekNum > 1) {
+        return 'week${currentWeekNum - 1}';
+      }
+    }
+    return null;
+  }
+
   Future<bool> _isSurveyRequiredAndIncomplete(String weekId) async {
     final userId = FirebaseAuth.instance.currentUser!.uid;
     final firestore = FirebaseFirestore.instance;
@@ -70,17 +81,17 @@ class _WeekScreenState extends State<WeekScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-          centerTitle: true,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          title: const Text(
-            "This Week",
-            style: TextStyle(
-              fontSize: 22,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w600,
-              color: Color.fromARGB(255, 181, 184, 184),
-            ),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          "This Week",
+          style: TextStyle(
+            fontSize: 22,
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w600,
+            color: Color.fromARGB(255, 181, 184, 184),
+          ),
         ),
         actions: [
           Padding(
@@ -133,16 +144,79 @@ class _WeekScreenState extends State<WeekScreen> {
                   );
                 }
 
-                return ListView.builder(
-                  itemCount: contentDocs.length,
-                  itemBuilder: (context, index) {
-                    final doc = contentDocs[index];
-                    final data = doc.data() as Map<String, dynamic>;
-                    final description = data['description'] ?? 'No description';
-                    final question = data['question'] ?? '';
-                    final contentId = doc.id;
+                final allSessionsCompleted = Future.wait(
+                  contentDocs.map((doc) async {
+                    final sessionProgress = await _firestore
+                        .collection('Users')
+                        .doc(_userId)
+                        .collection('Progress')
+                        .doc(doc.id)
+                        .get();
+                    final response = sessionProgress.data()?['response'] ?? '';
+                    return response.toString().trim().isNotEmpty;
+                  }),
+                );
 
-                    return _buildContentCard(description, question, contentId);
+                return FutureBuilder<List<bool>>(
+                  future: allSessionsCompleted,
+                  builder: (context, completeSnapshot) {
+                    final allComplete = completeSnapshot.hasData &&
+                        completeSnapshot.data!.every((submitted) => submitted);
+
+                    return Column(
+                      children: [
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: contentDocs.length,
+                            itemBuilder: (context, index) {
+                              final doc = contentDocs[index];
+                              final data = doc.data() as Map<String, dynamic>;
+                              final description =
+                                  data['description'] ?? 'No description';
+                              final question = data['question'] ?? '';
+                              final contentId = doc.id;
+                              return _buildContentCard(
+                                  description, question, contentId);
+                            },
+                          ),
+                        ),
+                        if (allComplete)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12.0),
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white
+                                    .withAlpha(38), // semi-transparent white
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(50),
+                                ),
+                              ),
+                              onPressed: () async {
+                                await _firestore
+                                    .collection('Users')
+                                    .doc(_userId)
+                                    .collection('WeekProgress')
+                                    .doc(widget.week.id)
+                                    .set({'status': 'completed'});
+                                if (context.mounted) {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ProgressScreen(),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: const Text(
+                                "Mark Week as Complete",
+                                style: TextStyle(fontFamily: 'Poppins'),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
                   },
                 );
               },
@@ -171,9 +245,14 @@ class _WeekScreenState extends State<WeekScreen> {
         final previousAnswer = responseData['response'] ?? '';
         final hasSubmitted = previousAnswer.toString().trim().isNotEmpty;
 
+        // Pre-fill submitted response into the controller
+        if (hasSubmitted) {
+          _responseController.text = previousAnswer.toString().trim();
+        }
+
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 10),
-          color: Colors.white.withValues(alpha: 0.85),
+          color: const Color.fromARGB(255, 113, 193, 205).withAlpha(150),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           child: Padding(
@@ -193,9 +272,14 @@ class _WeekScreenState extends State<WeekScreen> {
                     controller: _responseController,
                     maxLines: 4,
                     enabled: !hasSubmitted,
-                    decoration: const InputDecoration(
+                    style: hasSubmitted
+                        ? const TextStyle(color: Colors.grey)
+                        : const TextStyle(color: Colors.black),
+                    decoration: InputDecoration(
                       labelText: "Your Response",
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
+                      filled: true,
+                      fillColor: hasSubmitted ? Colors.grey[200] : Colors.white,
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
@@ -207,11 +291,17 @@ class _WeekScreenState extends State<WeekScreen> {
                   const SizedBox(height: 10),
                   if (!hasSubmitted)
                     ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white
+                            .withAlpha(38), // semi-transparent white
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                      ),
                       onPressed: () async {
-                        // 1. Check if the survey must be completed before allowing submission
                         final isBlocked = await _isSurveyRequiredAndIncomplete(
                             widget.week.id);
-
                         if (isBlocked) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -223,7 +313,28 @@ class _WeekScreenState extends State<WeekScreen> {
                           return;
                         }
 
-                        // 2. Continue with normal validation + submission logic
+                        final prevWeekId = _getPreviousWeekId(widget.week.id);
+                        if (prevWeekId != null) {
+                          final prevDoc = await _firestore
+                              .collection('Users')
+                              .doc(_userId)
+                              .collection('WeekProgress')
+                              .doc(prevWeekId)
+                              .get();
+
+                          final prevStatus = prevDoc.data()?['status'] ?? '';
+                          if (prevStatus != 'completed') {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    "Cannot submit this week until previous week is complete."),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
+                        }
+
                         if (_formKey.currentState!.validate()) {
                           final responseText = _responseController.text.trim();
 
@@ -232,57 +343,13 @@ class _WeekScreenState extends State<WeekScreen> {
                             'timestamp': FieldValue.serverTimestamp(),
                           });
 
-                          // Unlock the next week
-                          final nextWeekId = _getNextWeekId(widget.week.id);
-                          if (nextWeekId != null) {
-                            final nextWeekRef =
-                                _firestore.collection('Weeks').doc(nextWeekId);
-                            final nextDoc = await nextWeekRef.get();
-
-                            if (nextDoc.exists &&
-                                (nextDoc['status'] == 'unavailable')) {
-                              await nextWeekRef
-                                  .update({'status': 'available but locked'});
-                            }
-                          }
-
-                          // Check if all sessions in this week are submitted
-                          final weekContentSnapshot =
-                              await _weeklyContentRef.get();
-                          int submittedCount = 0;
-
-                          for (final session in weekContentSnapshot.docs) {
-                            final sessionProgress = await _firestore
-                                .collection('Users')
-                                .doc(_userId)
-                                .collection('Progress')
-                                .doc(session.id)
-                                .get();
-
-                            final response =
-                                sessionProgress.data()?['response'] ?? '';
-                            if (response.toString().trim().isNotEmpty) {
-                              submittedCount++;
-                            }
-                          }
-
-                          final weekProgressRef = _firestore
-                              .collection('Users')
-                              .doc(_userId)
-                              .collection('WeekProgress')
-                              .doc(widget.week.id);
-
-                          if (submittedCount ==
-                              weekContentSnapshot.docs.length) {
-                            await weekProgressRef.set({'status': 'completed'});
-                          } else {
-                            await weekProgressRef.set({'status': 'inProgress'});
-                          }
-
                           setState(() {}); // Refresh UI
                         }
                       },
-                      child: const Text("Submit"),
+                      child: const Text(
+                        "Submit",
+                        style: TextStyle(fontFamily: 'Poppins'),
+                      ),
                     ),
                   if (hasSubmitted)
                     const Text("✔ Response submitted",
@@ -294,16 +361,5 @@ class _WeekScreenState extends State<WeekScreen> {
         );
       },
     );
-  }
-
-  String? _getNextWeekId(String currentWeekId) {
-    final match = RegExp(r'week(\d+)').firstMatch(currentWeekId.toLowerCase());
-    if (match != null) {
-      final currentWeekNum = int.tryParse(match.group(1) ?? '');
-      if (currentWeekNum != null) {
-        return 'week${currentWeekNum + 1}';
-      }
-    }
-    return null;
   }
 }
