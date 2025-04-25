@@ -69,14 +69,14 @@ class _SurveyScreenState extends State<SurveyScreen> {
         .collection('SurveyProgress')
         .doc(widget.surveyId)
         .set({'completed': true, 'timestamp': FieldValue.serverTimestamp()});
-
+    if (!mounted) return;
     Navigator.of(context).pop(true); // modal returns "true" for completed
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: Colors.white.withOpacity(0.95),
+      backgroundColor: Colors.white.withValues(alpha: 0.95),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: const Text("Complete Survey", style: TextStyle(fontSize: 22)),
       content: _isLoading

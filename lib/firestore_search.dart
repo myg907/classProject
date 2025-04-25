@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'week_screen.dart';
 import 'progress_screen.dart';
+import 'dart:developer';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -70,7 +71,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         .then((result) {
                       setState(() => searchResults = result.docs);
                     }).catchError((error) {
-                      print('Error searching: $error');
+                      log('Error searching: $error');
                     });
                   },
                 ),
