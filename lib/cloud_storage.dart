@@ -69,6 +69,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -78,7 +79,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             fontSize: 22,
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w600,
-            color: Color.fromARGB(255, 43, 113, 105),
+            color: Color.fromARGB(255, 181, 184, 184),
           ),
         ),
       ),
@@ -118,7 +119,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       onPressed: () => _getImage(ImageSource.camera),
-                      child: const Text("Camera"),
+                      child: const Text("Camera", style: TextStyle(fontFamily: 'Poppins')),
                     ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -129,27 +130,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       onPressed: () => _getImage(ImageSource.gallery),
-                      child: const Text("Gallery"),
+                      child: const Text("Gallery",style: TextStyle(fontFamily: 'Poppins')),
                     ),
                   ],
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: 0.15),
+                    backgroundColor: Colors.white.withOpacity(0.15),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(50),
                     ),
                   ),
                   onPressed: () {
-                    FirebaseAuth.instance.signOut();
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                          builder: (context) => const LoginScreen()),
-                      (route) => false,
+                    // Show confirmation dialog
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text("Confirm Logout", style: TextStyle(fontFamily: 'Poppins')),
+                          content: Text("Are you sure you want to log out?", style: TextStyle(fontFamily: 'Poppins')),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop(); // Close the dialog
+                              },
+                              child: Text("Cancel", style: TextStyle(color: Colors.black, fontFamily: 'Poppins')),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                // Perform sign out and navigate
+                                FirebaseAuth.instance.signOut();
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                      builder: (context) => const LoginScreen()),
+                                  (route) => false,
+                                );
+                              },
+                              child: Text("Yes", style: TextStyle(color: Colors.red,fontFamily: 'Poppins')),
+                            ),
+                          ],
+                        );
+                      },
                     );
                   },
-                  child: const Text("Logout"),
+                  child: const Text(
+                    "Logout",
+                    style: TextStyle(fontFamily: 'Poppins'),
+                  ),
                 ),
               ],
             ),

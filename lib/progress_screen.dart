@@ -5,7 +5,6 @@ import 'package:term_project_proj_gomez/firestore_search.dart';
 import 'cloud_storage.dart';
 import 'week_screen.dart';
 import 'login_screen.dart';
-//import 'dart:ui';
 import 'survey_screen.dart';
 
 class Week {
@@ -130,7 +129,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent, // make scaffold transparent
-      extendBody: true, // extend body behind bottomNavigationBar
+      extendBody: true, 
       body: Stack(
         children: [
           // Background image
@@ -346,7 +345,7 @@ class ProgressContentScreenState extends State<ProgressContentScreen> {
             fontSize: 22,
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w600,
-            color: Color.fromARGB(255, 43, 113, 105),
+            color: Color.fromARGB(255, 181, 184, 184),
           ),
         ),
       ),
@@ -456,21 +455,45 @@ class ProgressContentScreenState extends State<ProgressContentScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
+                        // Button to logout with its respective alert dialog 
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Colors.white.withValues(alpha: 0.15),
+                            backgroundColor: Colors.white.withOpacity(0.15),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(50),
                             ),
                           ),
                           onPressed: () {
-                            FirebaseAuth.instance.signOut();
-                            Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(
-                                  builder: (context) => const LoginScreen()),
-                              (route) => false,
+                            // Show confirmation dialog
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text("Confirm Logout", style: TextStyle(fontFamily: 'Poppins')),
+                                  content: Text("Are you sure you want to log out?", style: TextStyle(fontFamily: 'Poppins')),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop(); // Close the dialog
+                                      },
+                                      child: Text("Cancel", style: TextStyle(color: Colors.black, fontFamily: 'Poppins')),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        // Perform sign out and navigate
+                                        FirebaseAuth.instance.signOut();
+                                        Navigator.of(context).pushAndRemoveUntil(
+                                          MaterialPageRoute(
+                                              builder: (context) => const LoginScreen()),
+                                          (route) => false,
+                                        );
+                                      },
+                                      child: Text("Yes", style: TextStyle(color: Colors.red,fontFamily: 'Poppins')),
+                                    ),
+                                  ],
+                                );
+                              },
                             );
                           },
                           child: const Text(
@@ -478,6 +501,7 @@ class ProgressContentScreenState extends State<ProgressContentScreen> {
                             style: TextStyle(fontFamily: 'Poppins'),
                           ),
                         ),
+                        // reset button
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white.withAlpha(38), // Alpha 0.15 equivale a 38/255

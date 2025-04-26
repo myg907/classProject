@@ -21,6 +21,7 @@ class _SearchScreenState extends State<SearchScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -30,7 +31,7 @@ class _SearchScreenState extends State<SearchScreen> {
             fontSize: 22,
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w600,
-            color: Color.fromARGB(255, 43, 113, 105),
+            color: Color.fromARGB(255, 181, 184, 184),
           ),
         ),
       ),
@@ -89,7 +90,7 @@ class _SearchScreenState extends State<SearchScreen> {
     if (_controller.text.isEmpty) {
       return const Center(
         child: Text(
-          'Enter a search term to see results.',
+          'Enter a search term to see results. Please start your search with a capital letter.',
           style: TextStyle(color: Colors.white70),
         ),
       );
