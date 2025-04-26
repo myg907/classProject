@@ -5,6 +5,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'login_screen.dart';
+import 'dart:developer';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -37,7 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
       }
     } on FirebaseException catch (e) {
-      print("Error fetching profile image: ${e.message}");
+      log('Error fetching profile image: ${e.message}');
     }
   }
 
@@ -58,7 +59,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           imageFile = url;
         });
       } on FirebaseException catch (e) {
-        print("Failed uploading image: ${e.message}");
+        log('Failed uploading image: ${e.message}');
       }
     }
   }
@@ -133,23 +134,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
                 ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white.withValues(alpha: 0.15),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(50),
-                      ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white.withValues(alpha: 0.15),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
                     ),
-                    onPressed: () {
-                      FirebaseAuth.instance.signOut();
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                            builder: (context) => const LoginScreen()),
-                        (route) => false,
-                      );
-                    },
-                    child: const Text("Logout"),
                   ),
+                  onPressed: () {
+                    FirebaseAuth.instance.signOut();
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                          builder: (context) => const LoginScreen()),
+                      (route) => false,
+                    );
+                  },
+                  child: const Text("Logout"),
+                ),
               ],
             ),
           ),

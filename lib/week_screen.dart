@@ -11,10 +11,10 @@ class WeekScreen extends StatefulWidget {
   const WeekScreen({super.key, required this.week});
 
   @override
-  _WeekScreenState createState() => _WeekScreenState();
+  WeekScreenState createState() => WeekScreenState();
 }
 
-class _WeekScreenState extends State<WeekScreen> {
+class WeekScreenState extends State<WeekScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late CollectionReference _weeklyContentRef;
   late String _userId;
@@ -229,8 +229,8 @@ class _WeekScreenState extends State<WeekScreen> {
 
   Widget _buildContentCard(
       String description, String question, String sessionId) {
-    final TextEditingController _responseController = TextEditingController();
-    final _formKey = GlobalKey<FormState>();
+    final TextEditingController responseController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
     final sessionDoc = _firestore
         .collection('Users')
         .doc(_userId)
@@ -247,7 +247,7 @@ class _WeekScreenState extends State<WeekScreen> {
 
         // Pre-fill submitted response into the controller
         if (hasSubmitted) {
-          _responseController.text = previousAnswer.toString().trim();
+          responseController.text = previousAnswer.toString().trim();
         }
 
         return Card(
@@ -258,7 +258,7 @@ class _WeekScreenState extends State<WeekScreen> {
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Form(
-              key: _formKey,
+              key: formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -269,7 +269,7 @@ class _WeekScreenState extends State<WeekScreen> {
                   Text(question, style: const TextStyle(fontSize: 14)),
                   const SizedBox(height: 10),
                   TextFormField(
-                    controller: _responseController,
+                    controller: responseController,
                     maxLines: 4,
                     enabled: !hasSubmitted,
                     style: hasSubmitted
@@ -302,6 +302,7 @@ class _WeekScreenState extends State<WeekScreen> {
                       onPressed: () async {
                         final isBlocked = await _isSurveyRequiredAndIncomplete(
                             widget.week.id);
+                        if (!mounted) return;
                         if (isBlocked) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -335,8 +336,8 @@ class _WeekScreenState extends State<WeekScreen> {
                           }
                         }
 
-                        if (_formKey.currentState!.validate()) {
-                          final responseText = _responseController.text.trim();
+                        if (formKey.currentState!.validate()) {
+                          final responseText = responseController.text.trim();
 
                           await sessionDoc.set({
                             'response': responseText,
@@ -353,7 +354,8 @@ class _WeekScreenState extends State<WeekScreen> {
                     ),
                   if (hasSubmitted)
                     const Text("✔ Response submitted",
-                        style: TextStyle(color: Colors.green)),
+                        style:
+                            TextStyle(color: Color.fromARGB(255, 17, 52, 18))),
                 ],
               ),
             ),

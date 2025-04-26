@@ -5,7 +5,7 @@ import 'package:term_project_proj_gomez/firestore_search.dart';
 import 'cloud_storage.dart';
 import 'week_screen.dart';
 import 'login_screen.dart';
-import 'dart:ui';
+//import 'dart:ui';
 import 'survey_screen.dart';
 
 class Week {
@@ -43,13 +43,16 @@ class ProgressScreen extends StatefulWidget {
 class _ProgressScreenState extends State<ProgressScreen> {
   int currentPage = 0;
 
+  late final GlobalKey<ProgressContentScreenState> _progressKey;
   late final List<Widget> pages;
 
   @override
   void initState() {
     super.initState();
+    _progressKey = GlobalKey<ProgressContentScreenState>();
     pages = [
       ProgressContentScreen(
+        key: _progressKey,
         onReset: () async {
           await resetUserProgress(context);
           setState(() {}); // rebuild screen after reset
@@ -180,10 +183,10 @@ class ProgressContentScreen extends StatefulWidget {
   const ProgressContentScreen({super.key, required this.onReset});
 
   @override
-  State<ProgressContentScreen> createState() => _ProgressContentScreenState();
+  State<ProgressContentScreen> createState() => ProgressContentScreenState();
 }
 
-class _ProgressContentScreenState extends State<ProgressContentScreen> {
+class ProgressContentScreenState extends State<ProgressContentScreen> {
   void _refresh() {
     setState(() {}); // forces rebuild of the UI
   }
@@ -218,7 +221,7 @@ class _ProgressContentScreenState extends State<ProgressContentScreen> {
         .doc(weekId)
         .get();
 
-    final weekStatus = userWeekDoc.data()?['status'] ?? null;
+    final weekStatus = userWeekDoc.data()?['status'];
     if (weekStatus != null) {
       return weekStatus; // "availableNotStarted", "inProgress", "completed"
     }
@@ -296,20 +299,35 @@ class _ProgressContentScreenState extends State<ProgressContentScreen> {
       }
 
       // 3. Show modal and exit loop if triggered
-      if (context.mounted) {
-        final completed = await showDialog<bool>(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => SurveyScreen(surveyId: surveyId),
-        );
+      final currentContext = context;
+      if (!currentContext.mounted) return;
 
-        if (completed == true) {
-          setState(() {}); // Refresh screen once survey is completed
-        }
+      final completed = await showDialog<bool>(
+        context: currentContext,
+        barrierDismissible: false,
+        builder: (_) => SurveyScreen(surveyId: surveyId),
+      );
 
-        break; // Only one survey at a time
+      if (!currentContext.mounted) return;
+
+      if (completed == true) {
+        setState(() {});
       }
+
+      break;
     }
+  }
+
+  void navigateToWeekScreen(Week week) {
+    final currentContext = context;
+    if (!currentContext.mounted) return;
+
+    Navigator.push(
+      currentContext,
+      MaterialPageRoute(
+        builder: (_) => WeekScreen(week: week),
+      ),
+    );
   }
 
   @override
@@ -419,14 +437,7 @@ class _ProgressContentScreenState extends State<ProgressContentScreen> {
                                             {'status': 'availableNotStarted'});
                                         _refresh(); // this triggers the status update immediately
                                       }
-
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              WeekScreen(week: week),
-                                        ),
-                                      );
+                                      navigateToWeekScreen(week);
                                     }
                                   },
                                 ),
