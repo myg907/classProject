@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
 import 'progress_screen.dart';
 import 'survey_screen.dart';
+import 'package:video_player/video_player.dart';
 
 class WeekScreen extends StatefulWidget {
   final Week week;
@@ -11,10 +12,13 @@ class WeekScreen extends StatefulWidget {
   const WeekScreen({super.key, required this.week});
 
   @override
-  WeekScreenState createState() => WeekScreenState();
+  _WeekScreenState createState() => _WeekScreenState();
 }
 
-class WeekScreenState extends State<WeekScreen> {
+class _WeekScreenState extends State<WeekScreen> {
+  final Map<String, VideoPlayerController> _videoControllers = {};
+  final Map<String, bool> _videoInitialized = {};
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late CollectionReference _weeklyContentRef;
   late String _userId;
@@ -34,16 +38,13 @@ class WeekScreenState extends State<WeekScreen> {
     if (match != null) {
       final currentWeekNum = int.tryParse(match.group(1) ?? '');
       if (currentWeekNum != null && currentWeekNum > 1) {
-        return 'week${currentWeekNum - 1}';
+        return 'week\${currentWeekNum - 1}';
       }
     }
     return null;
   }
 
   Future<bool> _isSurveyRequiredAndIncomplete(String weekId) async {
-    final userId = FirebaseAuth.instance.currentUser!.uid;
-    final firestore = FirebaseFirestore.instance;
-
     final surveyId = {
       'week1': 'week1_start',
       'week4': 'week4_start',
@@ -53,28 +54,52 @@ class WeekScreenState extends State<WeekScreen> {
 
     if (surveyId == null) return false;
 
-    final progressDoc = await firestore
+    final progressDoc = await _firestore
         .collection('Users')
-        .doc(userId)
+        .doc(_userId)
         .collection('SurveyProgress')
         .doc(surveyId)
         .get();
 
     if (progressDoc.exists) return false;
 
-    final surveyDoc = await firestore.collection('Surveys').doc(surveyId).get();
-
+    final surveyDoc =
+        await _firestore.collection('Surveys').doc(surveyId).get();
     if (!surveyDoc.exists) return false;
 
     // Show modal survey screen
-    if (!mounted) return false;
     final completed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (_) => SurveyScreen(surveyId: surveyId),
     );
 
-    return completed != true; // true if STILL incomplete
+    return completed != true;
+  }
+
+  Future<void> _initializeVideo(String sessionId, String videoPath) async {
+    if (_videoInitialized.containsKey(sessionId) &&
+        _videoInitialized[sessionId]!) return;
+
+    final controller = VideoPlayerController.asset('assets/videos/$videoPath');
+
+    try {
+      await controller.initialize();
+      setState(() {
+        _videoControllers[sessionId] = controller;
+        _videoInitialized[sessionId] = true;
+      });
+    } catch (e) {
+      print("Error initializing video for $sessionId: $e");
+    }
+  }
+
+  @override
+  void dispose() {
+    for (var controller in _videoControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
   }
 
   @override
@@ -97,27 +122,57 @@ class WeekScreenState extends State<WeekScreen> {
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: ElevatedButton(
+            child: // Button to logout with its respective alert dialog
+                ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white.withValues(alpha: 0.15),
+                backgroundColor: Colors.white.withOpacity(0.15),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(50),
                 ),
               ),
               onPressed: () {
-                FirebaseAuth.instance.signOut();
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                  (route) => false,
+                // Show confirmation dialog
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text("Confirm Logout",
+                          style: TextStyle(fontFamily: 'Poppins')),
+                      content: Text(
+                          "Are you sure you want to log out? Don't miss your progress!",
+                          style: TextStyle(fontFamily: 'Poppins')),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Close the dialog
+                          },
+                          child: Text("Cancel",
+                              style: TextStyle(
+                                  color: Colors.black, fontFamily: 'Poppins')),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            // Perform sign out and navigate
+                            FirebaseAuth.instance.signOut();
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                  builder: (context) => const LoginScreen()),
+                              (route) => false,
+                            );
+                          },
+                          child: Text("Yes",
+                              style: TextStyle(
+                                  color: Colors.red, fontFamily: 'Poppins')),
+                        ),
+                      ],
+                    );
+                  },
                 );
               },
               child: const Text(
                 "Logout",
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  color: Color.fromARGB(255, 236, 237, 238),
-                ),
+                style: TextStyle(fontFamily: 'Poppins'),
               ),
             ),
           ),
@@ -127,7 +182,7 @@ class WeekScreenState extends State<WeekScreen> {
         fit: StackFit.expand,
         children: [
           Image.asset('assets/images/Login.jpg', fit: BoxFit.cover),
-          Container(color: Colors.black.withValues(alpha: 0.5)),
+          Container(color: Colors.black.withOpacity(0.5)),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: StreamBuilder<QuerySnapshot>(
@@ -136,7 +191,6 @@ class WeekScreenState extends State<WeekScreen> {
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
-
                 final contentDocs = snapshot.data!.docs;
                 if (contentDocs.isEmpty) {
                   return const Center(
@@ -145,24 +199,21 @@ class WeekScreenState extends State<WeekScreen> {
                   );
                 }
 
-                final allSessionsCompleted = Future.wait(
-                  contentDocs.map((doc) async {
-                    final sessionProgress = await _firestore
+                return FutureBuilder<List<bool>>(
+                  future: Future.wait(contentDocs.map((doc) async {
+                    final progress = await _firestore
                         .collection('Users')
                         .doc(_userId)
                         .collection('Progress')
                         .doc(doc.id)
                         .get();
-                    final response = sessionProgress.data()?['response'] ?? '';
-                    return response.toString().trim().isNotEmpty;
-                  }),
-                );
-
-                return FutureBuilder<List<bool>>(
-                  future: allSessionsCompleted,
+                    return (progress.data()?['response'] ?? '')
+                        .toString()
+                        .isNotEmpty;
+                  })),
                   builder: (context, completeSnapshot) {
                     final allComplete = completeSnapshot.hasData &&
-                        completeSnapshot.data!.every((submitted) => submitted);
+                        completeSnapshot.data!.every((x) => x);
 
                     return Column(
                       children: [
@@ -175,9 +226,11 @@ class WeekScreenState extends State<WeekScreen> {
                               final description =
                                   data['description'] ?? 'No description';
                               final question = data['question'] ?? '';
-                              final contentId = doc.id;
+                              final videoAsset = data['video'] ?? '';
+                              final sessionId = doc.id;
+                              _initializeVideo(sessionId, videoAsset);
                               return _buildContentCard(
-                                  description, question, contentId);
+                                  description, question, sessionId, videoAsset);
                             },
                           ),
                         ),
@@ -186,8 +239,7 @@ class WeekScreenState extends State<WeekScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 12.0),
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white
-                                    .withAlpha(38), // semi-transparent white
+                                backgroundColor: Colors.white.withOpacity(0.15),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(50),
@@ -204,16 +256,12 @@ class WeekScreenState extends State<WeekScreen> {
                                   Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) =>
-                                          const ProgressScreen(),
-                                    ),
+                                        builder: (_) => const ProgressScreen()),
                                   );
                                 }
                               },
-                              child: const Text(
-                                "Mark Week as Complete",
-                                style: TextStyle(fontFamily: 'Poppins'),
-                              ),
+                              child: const Text("Mark Week as Complete",
+                                  style: TextStyle(fontFamily: 'Poppins')),
                             ),
                           ),
                       ],
@@ -229,92 +277,53 @@ class WeekScreenState extends State<WeekScreen> {
   }
 
   Widget _buildContentCard(
-      String description, String question, String sessionId) {
-    final TextEditingController responseController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
+      String description, String question, String sessionId, String videoPath) {
+    final _responseController = TextEditingController();
+    final _formKey = GlobalKey<FormState>();
     final sessionDoc = _firestore
         .collection('Users')
         .doc(_userId)
         .collection('Progress')
         .doc(sessionId);
 
-    void handleSubmit(
-        DocumentReference sessionDoc,
-        GlobalKey<FormState> formKey,
-        TextEditingController responseController) async {
-      final isBlocked = await _isSurveyRequiredAndIncomplete(widget.week.id);
-      if (!mounted) return;
-
-      if (isBlocked) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Cannot submit response until survey is complete."),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
-      final prevWeekId = _getPreviousWeekId(widget.week.id);
-      if (prevWeekId != null) {
-        final prevDoc = await _firestore
-            .collection('Users')
-            .doc(_userId)
-            .collection('WeekProgress')
-            .doc(prevWeekId)
-            .get();
-
-        final prevStatus = prevDoc.data()?['status'] ?? '';
-        if (prevStatus != 'completed') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                  "Cannot submit this week until previous week is complete."),
-              backgroundColor: Colors.red,
-            ),
-          );
-          return;
-        }
-      }
-
-      if (formKey.currentState!.validate()) {
-        final responseText = responseController.text.trim();
-
-        await sessionDoc.set({
-          'response': responseText,
-          'timestamp': FieldValue.serverTimestamp(),
-        });
-
-        if (!mounted) return;
-        setState(() {});
-      }
-    }
-
     return FutureBuilder<DocumentSnapshot>(
       future: sessionDoc.get(),
       builder: (context, snapshot) {
-        final responseData =
-            snapshot.data?.data() as Map<String, dynamic>? ?? {};
-        final previousAnswer = responseData['response'] ?? '';
+        final previousAnswer =
+            (snapshot.data?.data() as Map<String, dynamic>?)?['response'] ?? '';
         final hasSubmitted = previousAnswer.toString().trim().isNotEmpty;
 
-        // Pre-fill submitted response into the controller
         if (hasSubmitted) {
-          responseController.text = previousAnswer.toString().trim();
+          _responseController.text = previousAnswer.toString().trim();
         }
 
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 10),
-          color: const Color.fromARGB(255, 113, 193, 205).withAlpha(150),
+          color: const Color.fromARGB(255, 113, 193, 205).withOpacity(0.6),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Form(
-              key: formKey,
+              key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (controller != null && controller.value.isInitialized)
+                    AspectRatio(
+                      aspectRatio: controller.value.aspectRatio,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            controller.value.isPlaying
+                                ? controller.pause()
+                                : controller.play();
+                          });
+                        },
+                        child: VideoPlayer(controller),
+                      ),
+                    ),
+                  const SizedBox(height: 12),
                   Text(description,
                       style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.bold)),
@@ -322,12 +331,11 @@ class WeekScreenState extends State<WeekScreen> {
                   Text(question, style: const TextStyle(fontSize: 14)),
                   const SizedBox(height: 10),
                   TextFormField(
-                    controller: responseController,
+                    controller: _responseController,
                     maxLines: 4,
                     enabled: !hasSubmitted,
-                    style: hasSubmitted
-                        ? const TextStyle(color: Colors.grey)
-                        : const TextStyle(color: Colors.black),
+                    style: TextStyle(
+                        color: hasSubmitted ? Colors.grey : Colors.black),
                     decoration: InputDecoration(
                       labelText: "Your Response",
                       border: const OutlineInputBorder(),
@@ -343,29 +351,71 @@ class WeekScreenState extends State<WeekScreen> {
                   ),
                   const SizedBox(height: 10),
                   if (!hasSubmitted)
-                    Builder(
-                      builder: (submitContext) {
-                        return ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white.withAlpha(38),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white
+                            .withAlpha(38), // semi-transparent white
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                      ),
+                      onPressed: () async {
+                        final isBlocked = await _isSurveyRequiredAndIncomplete(
+                            widget.week.id);
+                        if (!mounted) return;
+                        if (isBlocked) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                  "Cannot submit response until survey is complete."),
+                              backgroundColor: Colors.red,
                             ),
-                          ),
-                          onPressed: () => handleSubmit(
-                              sessionDoc, formKey, responseController),
-                          child: const Text(
-                            "Submit",
-                            style: TextStyle(fontFamily: 'Poppins'),
-                          ),
-                        );
+                          );
+                          return;
+                        }
+
+                        final prevWeekId = _getPreviousWeekId(widget.week.id);
+                        if (prevWeekId != null) {
+                          final prevDoc = await _firestore
+                              .collection('Users')
+                              .doc(_userId)
+                              .collection('WeekProgress')
+                              .doc(prevWeekId)
+                              .get();
+
+                          final prevStatus = prevDoc.data()?['status'] ?? '';
+                          if (prevStatus != 'completed') {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    "Cannot submit this week until previous week is complete."),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
+                        }
+
+                        if (formKey.currentState!.validate()) {
+                          final responseText = responseController.text.trim();
+
+                          await sessionDoc.set({
+                            'response': responseText,
+                            'timestamp': FieldValue.serverTimestamp(),
+                          });
+
+                          setState(() {}); // Refresh UI
+                        }
                       },
+                      child: const Text(
+                        "Submit",
+                        style: TextStyle(fontFamily: 'Poppins'),
+                      ),
                     ),
                   if (hasSubmitted)
-                    const Text("✔ Response submitted",
-                        style:
-                            TextStyle(color: Color.fromARGB(255, 17, 52, 18))),
+                    const Text("\u2714 Response submitted",
+                        style: TextStyle(color: Colors.green)),
                 ],
               ),
             ),
