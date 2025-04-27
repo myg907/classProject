@@ -119,7 +119,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       onPressed: () => _getImage(ImageSource.camera),
-                      child: const Text("Camera", style: TextStyle(fontFamily: 'Poppins')),
+                      child: const Text("Camera",
+                          style: TextStyle(fontFamily: 'Poppins')),
                     ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
@@ -130,13 +131,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       onPressed: () => _getImage(ImageSource.gallery),
-                      child: const Text("Gallery",style: TextStyle(fontFamily: 'Poppins')),
+                      child: const Text("Gallery",
+                          style: TextStyle(fontFamily: 'Poppins')),
                     ),
                   ],
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white.withOpacity(0.15),
+                    backgroundColor: Colors.white.withValues(alpha: .15),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(50),
@@ -148,14 +150,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
-                          title: Text("Confirm Logout", style: TextStyle(fontFamily: 'Poppins')),
-                          content: Text("Are you sure you want to log out?", style: TextStyle(fontFamily: 'Poppins')),
+                          title: Text("Confirm Logout",
+                              style: TextStyle(fontFamily: 'Poppins')),
+                          content: Text("Are you sure you want to log out?",
+                              style: TextStyle(fontFamily: 'Poppins')),
                           actions: [
                             TextButton(
                               onPressed: () {
                                 Navigator.of(context).pop(); // Close the dialog
                               },
-                              child: Text("Cancel", style: TextStyle(color: Colors.black, fontFamily: 'Poppins')),
+                              child: Text("Cancel",
+                                  style: TextStyle(
+                                      color: Colors.black,
+                                      fontFamily: 'Poppins')),
                             ),
                             TextButton(
                               onPressed: () {
@@ -163,11 +170,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 FirebaseAuth.instance.signOut();
                                 Navigator.of(context).pushAndRemoveUntil(
                                   MaterialPageRoute(
-                                      builder: (context) => const LoginScreen()),
+                                      builder: (context) =>
+                                          const LoginScreen()),
                                   (route) => false,
                                 );
                               },
-                              child: Text("Yes", style: TextStyle(color: Colors.red,fontFamily: 'Poppins')),
+                              child: Text("Yes",
+                                  style: TextStyle(
+                                      color: Colors.red,
+                                      fontFamily: 'Poppins')),
                             ),
                           ],
                         );

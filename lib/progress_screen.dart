@@ -129,7 +129,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent, // make scaffold transparent
-      extendBody: true, 
+      extendBody: true,
       body: Stack(
         children: [
           // Background image
@@ -455,10 +455,11 @@ class ProgressContentScreenState extends State<ProgressContentScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        // Button to logout with its respective alert dialog 
+                        // Button to logout with its respective alert dialog
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white.withOpacity(0.15),
+                            backgroundColor:
+                                Colors.white.withValues(alpha: .15),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(50),
@@ -470,26 +471,38 @@ class ProgressContentScreenState extends State<ProgressContentScreen> {
                               context: context,
                               builder: (BuildContext context) {
                                 return AlertDialog(
-                                  title: Text("Confirm Logout", style: TextStyle(fontFamily: 'Poppins')),
-                                  content: Text("Are you sure you want to log out?", style: TextStyle(fontFamily: 'Poppins')),
+                                  title: Text("Confirm Logout",
+                                      style: TextStyle(fontFamily: 'Poppins')),
+                                  content: Text(
+                                      "Are you sure you want to log out?",
+                                      style: TextStyle(fontFamily: 'Poppins')),
                                   actions: [
                                     TextButton(
                                       onPressed: () {
-                                        Navigator.of(context).pop(); // Close the dialog
+                                        Navigator.of(context)
+                                            .pop(); // Close the dialog
                                       },
-                                      child: Text("Cancel", style: TextStyle(color: Colors.black, fontFamily: 'Poppins')),
+                                      child: Text("Cancel",
+                                          style: TextStyle(
+                                              color: Colors.black,
+                                              fontFamily: 'Poppins')),
                                     ),
                                     TextButton(
                                       onPressed: () {
                                         // Perform sign out and navigate
                                         FirebaseAuth.instance.signOut();
-                                        Navigator.of(context).pushAndRemoveUntil(
+                                        Navigator.of(context)
+                                            .pushAndRemoveUntil(
                                           MaterialPageRoute(
-                                              builder: (context) => const LoginScreen()),
+                                              builder: (context) =>
+                                                  const LoginScreen()),
                                           (route) => false,
                                         );
                                       },
-                                      child: Text("Yes", style: TextStyle(color: Colors.red,fontFamily: 'Poppins')),
+                                      child: Text("Yes",
+                                          style: TextStyle(
+                                              color: Colors.red,
+                                              fontFamily: 'Poppins')),
                                     ),
                                   ],
                                 );
@@ -504,7 +517,8 @@ class ProgressContentScreenState extends State<ProgressContentScreen> {
                         // reset button
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white.withAlpha(38), // Alpha 0.15 equivale a 38/255
+                            backgroundColor: Colors.white
+                                .withAlpha(38), // Alpha 0.15 equivale a 38/255
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(50),
@@ -515,20 +529,31 @@ class ProgressContentScreenState extends State<ProgressContentScreen> {
                               context: context,
                               builder: (BuildContext context) {
                                 return AlertDialog(
-                                  title: const Text("Confirm Reset", style: TextStyle(fontFamily: 'Poppins')),
-                                  content: const Text("Are you sure you want to reset your progress?", style: TextStyle(fontFamily: 'Poppins')),
+                                  title: const Text("Confirm Reset",
+                                      style: TextStyle(fontFamily: 'Poppins')),
+                                  content: const Text(
+                                      "Are you sure you want to reset your progress?",
+                                      style: TextStyle(fontFamily: 'Poppins')),
                                   actions: [
                                     TextButton(
                                       onPressed: () {
-                                        Navigator.of(context).pop(false); // Cancel
+                                        Navigator.of(context)
+                                            .pop(false); // Cancel
                                       },
-                                      child: const Text("Cancel", style: TextStyle(color: Colors.black, fontFamily: 'Poppins')),
+                                      child: const Text("Cancel",
+                                          style: TextStyle(
+                                              color: Colors.black,
+                                              fontFamily: 'Poppins')),
                                     ),
                                     TextButton(
                                       onPressed: () {
-                                        Navigator.of(context).pop(true); // Confirm
+                                        Navigator.of(context)
+                                            .pop(true); // Confirm
                                       },
-                                      child: const Text("Yes, reset", style: TextStyle(color: Colors.red, fontFamily: 'Poppins')),
+                                      child: const Text("Yes, reset",
+                                          style: TextStyle(
+                                              color: Colors.red,
+                                              fontFamily: 'Poppins')),
                                     ),
                                   ],
                                 );
@@ -545,7 +570,6 @@ class ProgressContentScreenState extends State<ProgressContentScreen> {
                             style: TextStyle(fontFamily: 'Poppins'),
                           ),
                         ),
-
                       ],
                     ),
                   ),

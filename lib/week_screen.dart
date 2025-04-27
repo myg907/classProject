@@ -5,6 +5,7 @@ import 'login_screen.dart';
 import 'progress_screen.dart';
 import 'survey_screen.dart';
 import 'package:video_player/video_player.dart';
+import 'dart:developer';
 
 class WeekScreen extends StatefulWidget {
   final Week week;
@@ -12,10 +13,10 @@ class WeekScreen extends StatefulWidget {
   const WeekScreen({super.key, required this.week});
 
   @override
-  _WeekScreenState createState() => _WeekScreenState();
+  WeekScreenState createState() => WeekScreenState();
 }
 
-class _WeekScreenState extends State<WeekScreen> {
+class WeekScreenState extends State<WeekScreen> {
   final Map<String, VideoPlayerController> _videoControllers = {};
   final Map<String, bool> _videoInitialized = {};
 
@@ -38,7 +39,7 @@ class _WeekScreenState extends State<WeekScreen> {
     if (match != null) {
       final currentWeekNum = int.tryParse(match.group(1) ?? '');
       if (currentWeekNum != null && currentWeekNum > 1) {
-        return 'week\${currentWeekNum - 1}';
+        return 'week${currentWeekNum - 1}';
       }
     }
     return null;
@@ -79,7 +80,9 @@ class _WeekScreenState extends State<WeekScreen> {
 
   Future<void> _initializeVideo(String sessionId, String videoPath) async {
     if (_videoInitialized.containsKey(sessionId) &&
-        _videoInitialized[sessionId]!) return;
+        _videoInitialized[sessionId]!) {
+      return;
+    }
 
     final controller = VideoPlayerController.asset('assets/videos/$videoPath');
 
@@ -90,7 +93,7 @@ class _WeekScreenState extends State<WeekScreen> {
         _videoInitialized[sessionId] = true;
       });
     } catch (e) {
-      print("Error initializing video for $sessionId: $e");
+      log("Error initializing video for $sessionId: $e");
     }
   }
 
@@ -125,7 +128,7 @@ class _WeekScreenState extends State<WeekScreen> {
             child: // Button to logout with its respective alert dialog
                 ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white.withOpacity(0.15),
+                backgroundColor: Colors.white.withValues(alpha: .15),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(50),
@@ -182,7 +185,7 @@ class _WeekScreenState extends State<WeekScreen> {
         fit: StackFit.expand,
         children: [
           Image.asset('assets/images/Login.jpg', fit: BoxFit.cover),
-          Container(color: Colors.black.withOpacity(0.5)),
+          Container(color: Colors.black.withValues(alpha: .5)),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: StreamBuilder<QuerySnapshot>(
@@ -239,7 +242,8 @@ class _WeekScreenState extends State<WeekScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 12.0),
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white.withOpacity(0.15),
+                                backgroundColor:
+                                    Colors.white.withValues(alpha: .15),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(50),
@@ -278,8 +282,10 @@ class _WeekScreenState extends State<WeekScreen> {
 
   Widget _buildContentCard(
       String description, String question, String sessionId, String videoPath) {
-    final _responseController = TextEditingController();
-    final _formKey = GlobalKey<FormState>();
+    final responseController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    final controller = _videoControllers[sessionId];
+
     final sessionDoc = _firestore
         .collection('Users')
         .doc(_userId)
@@ -294,18 +300,18 @@ class _WeekScreenState extends State<WeekScreen> {
         final hasSubmitted = previousAnswer.toString().trim().isNotEmpty;
 
         if (hasSubmitted) {
-          _responseController.text = previousAnswer.toString().trim();
+          responseController.text = previousAnswer.toString().trim();
         }
 
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 10),
-          color: const Color.fromARGB(255, 113, 193, 205).withOpacity(0.6),
+          color: const Color.fromARGB(255, 113, 193, 205).withValues(alpha: .6),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Form(
-              key: _formKey,
+              key: formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -331,7 +337,7 @@ class _WeekScreenState extends State<WeekScreen> {
                   Text(question, style: const TextStyle(fontSize: 14)),
                   const SizedBox(height: 10),
                   TextFormField(
-                    controller: _responseController,
+                    controller: responseController,
                     maxLines: 4,
                     enabled: !hasSubmitted,
                     style: TextStyle(
