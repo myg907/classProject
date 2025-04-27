@@ -67,6 +67,7 @@ class WeekScreenState extends State<WeekScreen> {
     if (!surveyDoc.exists) return false;
 
     // Show modal survey screen
+    if (!mounted) return false;
     final completed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -237,6 +238,58 @@ class WeekScreenState extends State<WeekScreen> {
         .collection('Progress')
         .doc(sessionId);
 
+    void handleSubmit(
+        DocumentReference sessionDoc,
+        GlobalKey<FormState> formKey,
+        TextEditingController responseController) async {
+      final isBlocked = await _isSurveyRequiredAndIncomplete(widget.week.id);
+      if (!mounted) return;
+
+      if (isBlocked) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Cannot submit response until survey is complete."),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      final prevWeekId = _getPreviousWeekId(widget.week.id);
+      if (prevWeekId != null) {
+        final prevDoc = await _firestore
+            .collection('Users')
+            .doc(_userId)
+            .collection('WeekProgress')
+            .doc(prevWeekId)
+            .get();
+
+        final prevStatus = prevDoc.data()?['status'] ?? '';
+        if (prevStatus != 'completed') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  "Cannot submit this week until previous week is complete."),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+      }
+
+      if (formKey.currentState!.validate()) {
+        final responseText = responseController.text.trim();
+
+        await sessionDoc.set({
+          'response': responseText,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+
+        if (!mounted) return;
+        setState(() {});
+      }
+    }
+
     return FutureBuilder<DocumentSnapshot>(
       future: sessionDoc.get(),
       builder: (context, snapshot) {
@@ -290,67 +343,24 @@ class WeekScreenState extends State<WeekScreen> {
                   ),
                   const SizedBox(height: 10),
                   if (!hasSubmitted)
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white
-                            .withAlpha(38), // semi-transparent white
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(50),
-                        ),
-                      ),
-                      onPressed: () async {
-                        final isBlocked = await _isSurveyRequiredAndIncomplete(
-                            widget.week.id);
-                        if (!mounted) return;
-                        if (isBlocked) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                  "Cannot submit response until survey is complete."),
-                              backgroundColor: Colors.red,
+                    Builder(
+                      builder: (submitContext) {
+                        return ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white.withAlpha(38),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50),
                             ),
-                          );
-                          return;
-                        }
-
-                        final prevWeekId = _getPreviousWeekId(widget.week.id);
-                        if (prevWeekId != null) {
-                          final prevDoc = await _firestore
-                              .collection('Users')
-                              .doc(_userId)
-                              .collection('WeekProgress')
-                              .doc(prevWeekId)
-                              .get();
-
-                          final prevStatus = prevDoc.data()?['status'] ?? '';
-                          if (prevStatus != 'completed') {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    "Cannot submit this week until previous week is complete."),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                            return;
-                          }
-                        }
-
-                        if (formKey.currentState!.validate()) {
-                          final responseText = responseController.text.trim();
-
-                          await sessionDoc.set({
-                            'response': responseText,
-                            'timestamp': FieldValue.serverTimestamp(),
-                          });
-
-                          setState(() {}); // Refresh UI
-                        }
+                          ),
+                          onPressed: () => handleSubmit(
+                              sessionDoc, formKey, responseController),
+                          child: const Text(
+                            "Submit",
+                            style: TextStyle(fontFamily: 'Poppins'),
+                          ),
+                        );
                       },
-                      child: const Text(
-                        "Submit",
-                        style: TextStyle(fontFamily: 'Poppins'),
-                      ),
                     ),
                   if (hasSubmitted)
                     const Text("✔ Response submitted",
