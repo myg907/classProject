@@ -1,5 +1,5 @@
-import 'dart:convert'; // NEW
-import 'package:http/http.dart' as http; // NEW
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -18,9 +18,9 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
   String? error;
   bool isProcessing = false;
 
-  Set<Marker> _markers = {}; // <-- NEW for hospital markers
+  Set<Marker> _markers = {}; // for hospital markers
 
-  final String _googleApiKey = "AIzaSyA-JMFRJFPrFKl6KmbpgMnuQbpVafKaPkE"; // <-- PUT OUR API
+  final String _googleApiKey = "AIzaSyA-JMFRJFPrFKl6KmbpgMnuQbpVafKaPkE"; 
 
   @override
   void initState() {
@@ -50,14 +50,16 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
         fit: StackFit.expand,
         children: [
           Image.asset('assets/images/Login.jpg', fit: BoxFit.cover),
-          Container(color: Colors.black.withAlpha(38)), // <-- FIXED THE DOUBLE DOT
-          if (_initialPosition == null)
-            const Center(child: CircularProgressIndicator())
+          Container(color: Colors.black.withAlpha(38)),
+          if (error != null)
+            Center(child: Text(error!, style: TextStyle(color: Colors.red)))
+          else if (_initialPosition == null)
+            const Center(child: CircularProgressIndicator()) // Loading
           else
             GoogleMap(
               initialCameraPosition: _initialPosition!,
               myLocationEnabled: true,
-              markers: _markers, // <-- NEW: show hospital markers
+              markers: _markers, // show hospital markers
               onMapCreated: (controller) => _mapController = controller,
             ),
         ],
@@ -70,7 +72,7 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
               setState(() => positions.clear());
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white, // <-- FIXED withValues()
+              backgroundColor: Colors.white,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(50),
@@ -87,25 +89,35 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
   }
 
   Future<void> _getLocation() async {
-    error = null;
+    try {
+      error = null;
 
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      error = "Location services are disabled.";
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        error = 'Location permissions are denied. Enable them in settings.';
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          error = "Location services are disabled.";
+        });
+        return;
       }
-    }
-    if (permission == LocationPermission.deniedForever) {
-      error = 'Location permissions are permanently denied.';
-    }
 
-    if (error == null) {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            error = 'Location permissions are denied. Enable them in settings.';
+          });
+          return;
+        }
+      }
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          error = 'Location permissions are permanently denied.';
+        });
+        return;
+      }
+
+      // Once permission is granted, get the current position
       setState(() => isProcessing = true);
       Position pos = await Geolocator.getCurrentPosition();
       positions.add(pos);
@@ -114,54 +126,60 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
         zoom: 14.0,
       );
 
-      await _getNearbyHospitals(pos.latitude, pos.longitude); // <-- NEW: search for hospitals
+      await _getNearbyHospitals(pos.latitude, pos.longitude); // Search for hospitals
 
       setState(() {
         isProcessing = false;
       });
+    } catch (e) {
+      setState(() {
+        error = "An error occurred: $e";
+      });
     }
-
-    setState(() {});
   }
 
   Future<void> _getNearbyHospitals(double lat, double lng) async {
-    final url = Uri.parse(
-      'https://maps.googleapis.com/maps/api/place/nearbysearch/json'
-      '?location=$lat,$lng'
-      '&radius=5000' // 5 km radius
-      '&type=hospital'
-      '&key=$_googleApiKey',
-    );
+    try {
+      final url = Uri.parse(
+        'https://maps.googleapis.com/maps/api/place/nearbysearch/json'
+        '?location=$lat,$lng'
+        '&radius=5000' // 5 km radius
+        '&type=hospital'
+        '&key=$_googleApiKey',
+      );
 
-    final response = await http.get(url);
+      final response = await http.get(url);
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
 
-      if (data['results'] != null) {
-        Set<Marker> newMarkers = {};
+        if (data['results'] != null) {
+          Set<Marker> newMarkers = {};
 
-        for (var hospital in data['results']) {
-          final hospitalName = hospital['name'];
-          final hospitalLat = hospital['geometry']['location']['lat'];
-          final hospitalLng = hospital['geometry']['location']['lng'];
+          for (var hospital in data['results']) {
+            final hospitalName = hospital['name'];
+            final hospitalLat = hospital['geometry']['location']['lat'];
+            final hospitalLng = hospital['geometry']['location']['lng'];
 
-          newMarkers.add(
-            Marker(
-              markerId: MarkerId(hospitalName),
-              position: LatLng(hospitalLat, hospitalLng),
-              infoWindow: InfoWindow(title: hospitalName),
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-            ),
-          );
+            newMarkers.add(
+              Marker(
+                markerId: MarkerId(hospitalName),
+                position: LatLng(hospitalLat, hospitalLng),
+                infoWindow: InfoWindow(title: hospitalName),
+                icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+              ),
+            );
+          }
+
+          setState(() {
+            _markers = newMarkers;
+          });
         }
-
-        setState(() {
-          _markers = newMarkers;
-        });
+      } else {
+        print('Failed to load nearby hospitals');
       }
-    } else {
-      print('Failed to load nearby hospitals');
+    } catch (e) {
+      print('Error fetching nearby hospitals: $e');
     }
   }
 }
