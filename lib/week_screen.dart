@@ -6,7 +6,7 @@ import 'progress_screen.dart';
 import 'survey_screen.dart';
 import 'package:video_player/video_player.dart';
 import 'dart:developer';
-import 'splash_screen.dart';
+//import 'splash_screen.dart';
 
 class WeekScreen extends StatefulWidget {
   final Week week;
@@ -108,196 +108,183 @@ class WeekScreenState extends State<WeekScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-        canPop: false,
-        onPopInvokedWithResult: (bool didPop, dynamic result) {
-          if (result.didPop) return;
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const SplashScreen()),
-          );
-        },
-        child: Scaffold(
-          extendBodyBehindAppBar: true,
-          appBar: AppBar(
-            centerTitle: true,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            title: const Text(
-              "This Week",
-              style: TextStyle(
-                fontSize: 22,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w600,
-                color: Color.fromARGB(255, 181, 184, 184),
-              ),
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Hero(
+          tag: widget.week.id,
+          child: const Text(
+            "This Week",
+            style: TextStyle(
+              fontSize: 22,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w600,
+              color: Color.fromARGB(255, 181, 184, 184),
             ),
-            actions: [
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: // Button to logout with its respective alert dialog
-                    ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white.withValues(alpha: .15),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50),
-                    ),
-                  ),
-                  onPressed: () {
-                    // Show confirmation dialog
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Text("Confirm Logout",
-                              style: TextStyle(fontFamily: 'Poppins')),
-                          content: Text(
-                              "Are you sure you want to log out? Don't miss your progress!",
-                              style: TextStyle(fontFamily: 'Poppins')),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop(); // Close the dialog
-                              },
-                              child: Text("Cancel",
-                                  style: TextStyle(
-                                      color: Colors.black,
-                                      fontFamily: 'Poppins')),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                // Perform sign out and navigate
-                                FirebaseAuth.instance.signOut();
-                                Navigator.of(context).pushAndRemoveUntil(
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          const LoginScreen()),
-                                  (route) => false,
-                                );
-                              },
-                              child: Text("Yes",
-                                  style: TextStyle(
-                                      color: Colors.red,
-                                      fontFamily: 'Poppins')),
-                            ),
-                          ],
-                        );
-                      },
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white.withAlpha(38),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
+              ),
+              onPressed: () {
+                // Show confirmation dialog
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text("Confirm Logout",
+                          style: TextStyle(fontFamily: 'Poppins')),
+                      content: Text(
+                          "Are you sure you want to log out? Don't miss your progress!",
+                          style: TextStyle(fontFamily: 'Poppins')),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Close the dialog
+                          },
+                          child: Text("Cancel",
+                              style: TextStyle(
+                                  color: Colors.black, fontFamily: 'Poppins')),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            // Perform sign out and navigate
+                            FirebaseAuth.instance.signOut();
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                  builder: (context) => const LoginScreen()),
+                              (route) => false,
+                            );
+                          },
+                          child: Text("Yes",
+                              style: TextStyle(
+                                  color: Colors.red, fontFamily: 'Poppins')),
+                        ),
+                      ],
                     );
                   },
-                  child: const Text(
-                    "Logout",
-                    style: TextStyle(fontFamily: 'Poppins'),
-                  ),
-                ),
+                );
+              },
+              child: const Text(
+                "Logout",
+                style: TextStyle(fontFamily: 'Poppins'),
               ),
-            ],
+            ),
           ),
-          body: Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.asset('assets/images/Login.jpg', fit: BoxFit.cover),
-              Container(color: Colors.black.withValues(alpha: .5)),
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: StreamBuilder<QuerySnapshot>(
-                    stream: _weeklyContentRef.orderBy('order').snapshots(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      final contentDocs = snapshot.data!.docs;
-                      if (contentDocs.isEmpty) {
-                        return const Center(
-                          child: Text("No content available.",
-                              style: TextStyle(color: Colors.white)),
-                        );
-                      }
+        ],
+      ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset('assets/images/Login.jpg', fit: BoxFit.cover),
+          Container(color: Colors.black.withValues(alpha: .5)),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _weeklyContentRef.orderBy('order').snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final contentDocs = snapshot.data!.docs;
+                  if (contentDocs.isEmpty) {
+                    return const Center(
+                      child: Text("No content available.",
+                          style: TextStyle(color: Colors.white)),
+                    );
+                  }
 
-                      return FutureBuilder<List<bool>>(
-                        future: Future.wait(contentDocs.map((doc) async {
-                          final progress = await _firestore
-                              .collection('Users')
-                              .doc(_userId)
-                              .collection('Progress')
-                              .doc(doc.id)
-                              .get();
-                          return (progress.data()?['response'] ?? '')
-                              .toString()
-                              .isNotEmpty;
-                        })),
-                        builder: (context, completeSnapshot) {
-                          final allComplete = completeSnapshot.hasData &&
-                              completeSnapshot.data!.every((x) => x);
+                  return FutureBuilder<List<bool>>(
+                    future: Future.wait(contentDocs.map((doc) async {
+                      final progress = await _firestore
+                          .collection('Users')
+                          .doc(_userId)
+                          .collection('Progress')
+                          .doc(doc.id)
+                          .get();
+                      return (progress.data()?['response'] ?? '')
+                          .toString()
+                          .isNotEmpty;
+                    })),
+                    builder: (context, completeSnapshot) {
+                      final allComplete = completeSnapshot.hasData &&
+                          completeSnapshot.data!.every((x) => x);
 
-                          return Column(
-                            children: [
-                              Expanded(
-                                child: ListView.builder(
-                                  itemCount: contentDocs.length,
-                                  itemBuilder: (context, index) {
-                                    final doc = contentDocs[index];
-                                    final data =
-                                        doc.data() as Map<String, dynamic>;
-                                    final description =
-                                        data['description'] ?? 'No description';
-                                    final question = data['question'] ?? '';
-                                    final videoAsset = data['video'] ?? '';
-                                    final sessionId = doc.id;
-                                    _initializeVideo(sessionId, videoAsset);
-                                    return _buildContentCard(description,
-                                        question, sessionId, videoAsset);
-                                  },
-                                ),
-                              ),
-                              if (allComplete)
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 12.0),
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          Colors.white.withValues(alpha: .15),
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(50),
-                                      ),
-                                    ),
-                                    onPressed: () async {
-                                      await _firestore
-                                          .collection('Users')
-                                          .doc(_userId)
-                                          .collection('WeekProgress')
-                                          .doc(widget.week.id)
-                                          .set({'status': 'completed'});
-                                      if (context.mounted) {
-                                        Navigator.pushReplacement(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (_) =>
-                                                  const ProgressScreen()),
-                                        );
-                                      }
-                                    },
-                                    child: const Text("Mark Week as Complete",
-                                        style:
-                                            TextStyle(fontFamily: 'Poppins')),
+                      return Column(
+                        children: [
+                          Expanded(
+                            child: ListView.builder(
+                              itemCount: contentDocs.length,
+                              itemBuilder: (context, index) {
+                                final doc = contentDocs[index];
+                                final data = doc.data() as Map<String, dynamic>;
+                                final description =
+                                    data['description'] ?? 'No description';
+                                final question = data['question'] ?? '';
+                                final videoAsset = data['video'] ?? '';
+                                final sessionId = doc.id;
+                                _initializeVideo(sessionId, videoAsset);
+                                return _buildContentCard(description, question,
+                                    sessionId, videoAsset);
+                              },
+                            ),
+                          ),
+                          if (allComplete)
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 12.0),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      Colors.white.withValues(alpha: .15),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(50),
                                   ),
                                 ),
-                            ],
-                          );
-                        },
+                                onPressed: () async {
+                                  await _firestore
+                                      .collection('Users')
+                                      .doc(_userId)
+                                      .collection('WeekProgress')
+                                      .doc(widget.week.id)
+                                      .set({'status': 'completed'});
+                                  if (context.mounted) {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) =>
+                                              const ProgressScreen()),
+                                    );
+                                  }
+                                },
+                                child: const Text("Mark Week as Complete",
+                                    style: TextStyle(fontFamily: 'Poppins')),
+                              ),
+                            ),
+                        ],
                       );
                     },
-                  ),
-                ),
+                  );
+                },
               ),
-            ],
+            ),
           ),
-        ));
+        ],
+      ),
+    );
   }
 
   Widget _buildContentCard(
