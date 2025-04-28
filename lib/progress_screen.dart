@@ -354,8 +354,7 @@ class ProgressContentScreenState extends State<ProgressContentScreen> {
         children: [
           Image.asset('assets/images/Login.jpg', fit: BoxFit.cover),
           Container(color: Colors.black.withAlpha(50)),
-          Padding(
-            padding: const EdgeInsets.only(top: kToolbarHeight),
+          SafeArea(
             child: Column(
               children: [
                 Expanded(
@@ -448,132 +447,128 @@ class ProgressContentScreenState extends State<ProgressContentScreen> {
                     },
                   ),
                 ),
-                SafeArea(
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        // Button to logout with its respective alert dialog
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Colors.white.withValues(alpha: .15),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50),
-                            ),
-                          ),
-                          onPressed: () {
-                            // Show confirmation dialog
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: Text("Confirm Logout",
-                                      style: TextStyle(fontFamily: 'Poppins')),
-                                  content: Text(
-                                      "Are you sure you want to log out?",
-                                      style: TextStyle(fontFamily: 'Poppins')),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context)
-                                            .pop(); // Close the dialog
-                                      },
-                                      child: Text("Cancel",
-                                          style: TextStyle(
-                                              color: Colors.black,
-                                              fontFamily: 'Poppins')),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        // Perform sign out and navigate
-                                        FirebaseAuth.instance.signOut();
-                                        Navigator.of(context)
-                                            .pushAndRemoveUntil(
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const LoginScreen()),
-                                          (route) => false,
-                                        );
-                                      },
-                                      child: Text("Yes",
-                                          style: TextStyle(
-                                              color: Colors.red,
-                                              fontFamily: 'Poppins')),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                          child: const Text(
-                            "Logout",
-                            style: TextStyle(fontFamily: 'Poppins'),
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Button to logout with its respective alert dialog
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white.withValues(alpha: .15),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
                           ),
                         ),
-                        // reset button
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white
-                                .withAlpha(38), // Alpha 0.15 equivale a 38/255
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(50),
-                            ),
+                        onPressed: () {
+                          // Show confirmation dialog
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: Text("Confirm Logout",
+                                    style: TextStyle(fontFamily: 'Poppins')),
+                                content: Text(
+                                    "Are you sure you want to log out?",
+                                    style: TextStyle(fontFamily: 'Poppins')),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context)
+                                          .pop(); // Close the dialog
+                                    },
+                                    child: Text("Cancel",
+                                        style: TextStyle(
+                                            color: Colors.black,
+                                            fontFamily: 'Poppins')),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      // Perform sign out and navigate
+                                      FirebaseAuth.instance.signOut();
+                                      Navigator.of(context).pushAndRemoveUntil(
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                const LoginScreen()),
+                                        (route) => false,
+                                      );
+                                    },
+                                    child: Text("Yes",
+                                        style: TextStyle(
+                                            color: Colors.red,
+                                            fontFamily: 'Poppins')),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        child: const Text(
+                          "Logout",
+                          style: TextStyle(fontFamily: 'Poppins'),
+                        ),
+                      ),
+                      // reset button
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white
+                              .withAlpha(38), // Alpha 0.15 equivale a 38/255
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
                           ),
-                          onPressed: () async {
-                            bool? confirmReset = await showDialog<bool>(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: const Text("Confirm Reset",
-                                      style: TextStyle(fontFamily: 'Poppins')),
-                                  content: const Text(
-                                      "Are you sure you want to reset your progress?",
-                                      style: TextStyle(fontFamily: 'Poppins')),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context)
-                                            .pop(false); // Cancel
-                                      },
-                                      child: const Text("Cancel",
-                                          style: TextStyle(
-                                              color: Colors.black,
-                                              fontFamily: 'Poppins')),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context)
-                                            .pop(true); // Confirm
-                                      },
-                                      child: const Text("Yes, reset",
-                                          style: TextStyle(
-                                              color: Colors.red,
-                                              fontFamily: 'Poppins')),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
+                        ),
+                        onPressed: () async {
+                          bool? confirmReset = await showDialog<bool>(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text("Confirm Reset",
+                                    style: TextStyle(fontFamily: 'Poppins')),
+                                content: const Text(
+                                    "Are you sure you want to reset your progress?",
+                                    style: TextStyle(fontFamily: 'Poppins')),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context)
+                                          .pop(false); // Cancel
+                                    },
+                                    child: const Text("Cancel",
+                                        style: TextStyle(
+                                            color: Colors.black,
+                                            fontFamily: 'Poppins')),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context)
+                                          .pop(true); // Confirm
+                                    },
+                                    child: const Text("Yes, reset",
+                                        style: TextStyle(
+                                            color: Colors.red,
+                                            fontFamily: 'Poppins')),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
 
-                            if (confirmReset == true) {
-                              await widget.onReset();
-                              _refresh();
-                            }
-                          },
-                          child: const Text(
-                            "Reset Progress",
-                            style: TextStyle(fontFamily: 'Poppins'),
-                          ),
+                          if (confirmReset == true) {
+                            await widget.onReset();
+                            _refresh();
+                          }
+                        },
+                        child: const Text(
+                          "Reset Progress",
+                          style: TextStyle(fontFamily: 'Poppins'),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                )
+                ),
               ],
             ),
           ),

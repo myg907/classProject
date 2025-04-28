@@ -200,96 +200,99 @@ class WeekScreenState extends State<WeekScreen> {
             children: [
               Image.asset('assets/images/Login.jpg', fit: BoxFit.cover),
               Container(color: Colors.black.withValues(alpha: .5)),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: StreamBuilder<QuerySnapshot>(
-                  stream: _weeklyContentRef.orderBy('order').snapshots(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    final contentDocs = snapshot.data!.docs;
-                    if (contentDocs.isEmpty) {
-                      return const Center(
-                        child: Text("No content available.",
-                            style: TextStyle(color: Colors.white)),
-                      );
-                    }
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: _weeklyContentRef.orderBy('order').snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      final contentDocs = snapshot.data!.docs;
+                      if (contentDocs.isEmpty) {
+                        return const Center(
+                          child: Text("No content available.",
+                              style: TextStyle(color: Colors.white)),
+                        );
+                      }
 
-                    return FutureBuilder<List<bool>>(
-                      future: Future.wait(contentDocs.map((doc) async {
-                        final progress = await _firestore
-                            .collection('Users')
-                            .doc(_userId)
-                            .collection('Progress')
-                            .doc(doc.id)
-                            .get();
-                        return (progress.data()?['response'] ?? '')
-                            .toString()
-                            .isNotEmpty;
-                      })),
-                      builder: (context, completeSnapshot) {
-                        final allComplete = completeSnapshot.hasData &&
-                            completeSnapshot.data!.every((x) => x);
+                      return FutureBuilder<List<bool>>(
+                        future: Future.wait(contentDocs.map((doc) async {
+                          final progress = await _firestore
+                              .collection('Users')
+                              .doc(_userId)
+                              .collection('Progress')
+                              .doc(doc.id)
+                              .get();
+                          return (progress.data()?['response'] ?? '')
+                              .toString()
+                              .isNotEmpty;
+                        })),
+                        builder: (context, completeSnapshot) {
+                          final allComplete = completeSnapshot.hasData &&
+                              completeSnapshot.data!.every((x) => x);
 
-                        return Column(
-                          children: [
-                            Expanded(
-                              child: ListView.builder(
-                                itemCount: contentDocs.length,
-                                itemBuilder: (context, index) {
-                                  final doc = contentDocs[index];
-                                  final data =
-                                      doc.data() as Map<String, dynamic>;
-                                  final description =
-                                      data['description'] ?? 'No description';
-                                  final question = data['question'] ?? '';
-                                  final videoAsset = data['video'] ?? '';
-                                  final sessionId = doc.id;
-                                  _initializeVideo(sessionId, videoAsset);
-                                  return _buildContentCard(description,
-                                      question, sessionId, videoAsset);
-                                },
-                              ),
-                            ),
-                            if (allComplete)
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 12.0),
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        Colors.white.withValues(alpha: .15),
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(50),
-                                    ),
-                                  ),
-                                  onPressed: () async {
-                                    await _firestore
-                                        .collection('Users')
-                                        .doc(_userId)
-                                        .collection('WeekProgress')
-                                        .doc(widget.week.id)
-                                        .set({'status': 'completed'});
-                                    if (context.mounted) {
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (_) =>
-                                                const ProgressScreen()),
-                                      );
-                                    }
+                          return Column(
+                            children: [
+                              Expanded(
+                                child: ListView.builder(
+                                  itemCount: contentDocs.length,
+                                  itemBuilder: (context, index) {
+                                    final doc = contentDocs[index];
+                                    final data =
+                                        doc.data() as Map<String, dynamic>;
+                                    final description =
+                                        data['description'] ?? 'No description';
+                                    final question = data['question'] ?? '';
+                                    final videoAsset = data['video'] ?? '';
+                                    final sessionId = doc.id;
+                                    _initializeVideo(sessionId, videoAsset);
+                                    return _buildContentCard(description,
+                                        question, sessionId, videoAsset);
                                   },
-                                  child: const Text("Mark Week as Complete",
-                                      style: TextStyle(fontFamily: 'Poppins')),
                                 ),
                               ),
-                          ],
-                        );
-                      },
-                    );
-                  },
+                              if (allComplete)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 12.0),
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          Colors.white.withValues(alpha: .15),
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(50),
+                                      ),
+                                    ),
+                                    onPressed: () async {
+                                      await _firestore
+                                          .collection('Users')
+                                          .doc(_userId)
+                                          .collection('WeekProgress')
+                                          .doc(widget.week.id)
+                                          .set({'status': 'completed'});
+                                      if (context.mounted) {
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const ProgressScreen()),
+                                        );
+                                      }
+                                    },
+                                    child: const Text("Mark Week as Complete",
+                                        style:
+                                            TextStyle(fontFamily: 'Poppins')),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
               ),
             ],
