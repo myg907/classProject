@@ -396,48 +396,62 @@ class ProgressContentScreenState extends State<ProgressContentScreen> {
                             builder: (context, statusSnapshot) {
                               final status = statusSnapshot.data ?? "loading";
 
-                              return Card(
-                                margin: const EdgeInsets.symmetric(vertical: 4),
-                                color: Colors.white.withAlpha(180),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: ListTile(
-                                  title: Text(
-                                    week.label,
-                                    style: TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontWeight: FontWeight.bold,
-                                      color: Color.fromARGB(255, 43, 113, 105),
+                              return Hero(
+                                tag: week.id,
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: Card(
+                                    margin:
+                                        const EdgeInsets.symmetric(vertical: 4),
+                                    color: Colors.white.withAlpha(180),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: ListTile(
+                                      title: Text(
+                                        week.label,
+                                        style: TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontWeight: FontWeight.bold,
+                                          color:
+                                              Color.fromARGB(255, 43, 113, 105),
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        _formatStatusLabel(status),
+                                        style: const TextStyle(
+                                            color: Colors.black87),
+                                      ),
+                                      leading: _getStatusIcon(status),
+                                      trailing:
+                                          const Icon(Icons.arrow_forward_ios),
+                                      onTap: () async {
+                                        if (status != "locked") {
+                                          final weekProgressRef =
+                                              FirebaseFirestore.instance
+                                                  .collection('Users')
+                                                  .doc(userId)
+                                                  .collection('WeekProgress')
+                                                  .doc(week.id);
+
+                                          final existingProgress =
+                                              await weekProgressRef.get();
+
+                                          if (!existingProgress.exists) {
+                                            await weekProgressRef.set({
+                                              'status': 'availableNotStarted'
+                                            });
+                                            await Future.delayed(const Duration(
+                                                milliseconds: 50));
+                                            _refresh(); // this triggers the status update immediately
+                                          }
+                                          if (mounted) {
+                                            navigateToWeekScreen(week);
+                                          }
+                                        }
+                                      },
                                     ),
                                   ),
-                                  subtitle: Text(
-                                    _formatStatusLabel(status),
-                                    style:
-                                        const TextStyle(color: Colors.black87),
-                                  ),
-                                  leading: _getStatusIcon(status),
-                                  trailing: const Icon(Icons.arrow_forward_ios),
-                                  onTap: () async {
-                                    if (status != "locked") {
-                                      final weekProgressRef = FirebaseFirestore
-                                          .instance
-                                          .collection('Users')
-                                          .doc(userId)
-                                          .collection('WeekProgress')
-                                          .doc(week.id);
-
-                                      final existingProgress =
-                                          await weekProgressRef.get();
-
-                                      if (!existingProgress.exists) {
-                                        await weekProgressRef.set(
-                                            {'status': 'availableNotStarted'});
-                                        _refresh(); // this triggers the status update immediately
-                                      }
-                                      navigateToWeekScreen(week);
-                                    }
-                                  },
                                 ),
                               );
                             },
