@@ -171,7 +171,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
               icon: Icon(Icons.search), label: 'Search Week'),
-          BottomNavigationBarItem(icon: Icon(Icons.pin_drop), label: 'Get Help'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.pin_drop), label: 'Get Help'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
@@ -441,13 +442,12 @@ class ProgressContentScreenState extends State<ProgressContentScreen> {
                                               await weekProgressRef.get();
 
                                           if (!existingProgress.exists) {
+                                            // Check if user already submitted any session responses
                                             await weekProgressRef.set({
                                               'status': 'availableNotStarted'
                                             });
-                                            await Future.delayed(const Duration(
-                                                milliseconds: 50));
-                                            _refresh(); // this triggers the status update immediately
                                           }
+
                                           if (mounted) {
                                             navigateToWeekScreen(week);
                                           }

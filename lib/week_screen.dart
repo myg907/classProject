@@ -413,12 +413,33 @@ class WeekScreenState extends State<WeekScreen> {
                         if (formKey.currentState!.validate()) {
                           final responseText = responseController.text.trim();
 
+                          // Save the session response first
                           await sessionDoc.set({
                             'response': responseText,
                             'timestamp': FieldValue.serverTimestamp(),
                           });
 
-                          setState(() {}); // Refresh UI
+                          // Get the week progress status
+                          final weekProgressRef = FirebaseFirestore.instance
+                              .collection('Users')
+                              .doc(_userId)
+                              .collection('WeekProgress')
+                              .doc(widget.week.id);
+
+                          final weekProgressDoc = await weekProgressRef.get();
+                          final currentStatus =
+                              weekProgressDoc.data()?['status'];
+
+                          // If no status or availableNotStarted, promote to inProgress
+                          if (currentStatus == null ||
+                              currentStatus == 'availableNotStarted') {
+                            await weekProgressRef.set(
+                              {'status': 'inProgress'},
+                              SetOptions(merge: true),
+                            );
+                          }
+
+                          setState(() {}); // Refresh the UI
                         }
                       },
                       child: const Text(
