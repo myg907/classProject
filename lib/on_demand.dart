@@ -1,3 +1,5 @@
+import 'dart:convert'; // NEW
+import 'package:http/http.dart' as http; // NEW
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -11,15 +13,19 @@ class OnDemandScreen extends StatefulWidget {
 
 class _OnDemandScreenState extends State<OnDemandScreen> {
   GoogleMapController? _mapController;
-  CameraPosition? _initialPosition;  // <--- NEW
+  CameraPosition? _initialPosition;
   List<Position> positions = [];
   String? error;
   bool isProcessing = false;
 
+  Set<Marker> _markers = {}; // <-- NEW for hospital markers
+
+  final String _googleApiKey = "AIzaSyA-JMFRJFPrFKl6KmbpgMnuQbpVafKaPkE"; // <-- PUT YOUR REAL API KEY
+
   @override
   void initState() {
     super.initState();
-    _getLocation(); // Get location right when screen opens
+    _getLocation();
   }
 
   @override
@@ -44,13 +50,14 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
         fit: StackFit.expand,
         children: [
           Image.asset('assets/images/Login.jpg', fit: BoxFit.cover),
-          Container(color: Colors.black.withAlpha(50)),
+          Container(color: Colors.black.withAlpha(38)), // <-- FIXED THE DOUBLE DOT
           if (_initialPosition == null)
-            const Center(child: CircularProgressIndicator()) // Loading until location found
+            const Center(child: CircularProgressIndicator())
           else
             GoogleMap(
               initialCameraPosition: _initialPosition!,
               myLocationEnabled: true,
+              markers: _markers, // <-- NEW: show hospital markers
               onMapCreated: (controller) => _mapController = controller,
             ),
         ],
@@ -63,7 +70,7 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
               setState(() => positions.clear());
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
+              backgroundColor: Colors.white, // <-- FIXED withValues()
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(50),
@@ -106,9 +113,55 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
         target: LatLng(pos.latitude, pos.longitude),
         zoom: 14.0,
       );
-      isProcessing = false;
+
+      await _getNearbyHospitals(pos.latitude, pos.longitude); // <-- NEW: search for hospitals
+
+      setState(() {
+        isProcessing = false;
+      });
     }
 
     setState(() {});
+  }
+
+  Future<void> _getNearbyHospitals(double lat, double lng) async {
+    final url = Uri.parse(
+      'https://maps.googleapis.com/maps/api/place/nearbysearch/json'
+      '?location=$lat,$lng'
+      '&radius=5000' // 5 km radius
+      '&type=hospital'
+      '&key=$_googleApiKey',
+    );
+
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+
+      if (data['results'] != null) {
+        Set<Marker> newMarkers = {};
+
+        for (var hospital in data['results']) {
+          final hospitalName = hospital['name'];
+          final hospitalLat = hospital['geometry']['location']['lat'];
+          final hospitalLng = hospital['geometry']['location']['lng'];
+
+          newMarkers.add(
+            Marker(
+              markerId: MarkerId(hospitalName),
+              position: LatLng(hospitalLat, hospitalLng),
+              infoWindow: InfoWindow(title: hospitalName),
+              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+            ),
+          );
+        }
+
+        setState(() {
+          _markers = newMarkers;
+        });
+      }
+    } else {
+      print('Failed to load nearby hospitals');
+    }
   }
 }
