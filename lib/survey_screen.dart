@@ -78,14 +78,14 @@ class _SurveyScreenState extends State<SurveyScreen> {
     return AlertDialog(
       backgroundColor: Colors.white.withValues(alpha: 0.95),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text("Complete Survey", style: TextStyle(fontSize: 22)),
+      title: const Text("Complete Survey", style: TextStyle(fontSize: 22, fontFamily: 'Poppins')),
       content: _isLoading
           ? const SizedBox(
               height: 80, child: Center(child: CircularProgressIndicator()))
           : Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text("Week survey question goes here.\n\nLink:"),
+                Text("Week survey question goes here.\n\nLink:", style: TextStyle(fontFamily: 'Poppins')),
                 if (_surveyUrl != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
@@ -113,11 +113,11 @@ class _SurveyScreenState extends State<SurveyScreen> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false), // allow dismiss
-          child: const Text("Dismiss"),
+          child: const Text("Dismiss", style: TextStyle(color: Colors.red,fontFamily: 'Poppins')),
         ),
         ElevatedButton(
           onPressed: _submitCode,
-          child: const Text("Submit"),
+          child: const Text("Submit", style: TextStyle(fontFamily: 'Poppins', color: Colors.black,)),
         ),
       ],
     );
