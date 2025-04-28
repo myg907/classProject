@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:term_project_proj_gomez/firestore_search.dart';
+import 'package:term_project_proj_gomez/on_demand.dart';
 import 'cloud_storage.dart';
 import 'week_screen.dart';
 import 'login_screen.dart';
@@ -58,6 +59,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
         },
       ),
       const SearchScreen(),
+      const OnDemandScreen(),
       const ProfileScreen(),
     ];
   }
@@ -169,6 +171,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
               icon: Icon(Icons.search), label: 'Search Week'),
+          BottomNavigationBarItem(icon: Icon(Icons.pin_drop), label: 'Get Help'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),

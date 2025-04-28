@@ -1,0 +1,2 @@
+C:/Users/melis/flutter_projects/term-project-proj-gomez/android/app/.cxx/Debug/1f2w4t2k/x86/CMakeFiles/edit_cache.dir
+C:/Users/melis/flutter_projects/term-project-proj-gomez/android/app/.cxx/Debug/1f2w4t2k/x86/CMakeFiles/rebuild_cache.dir
