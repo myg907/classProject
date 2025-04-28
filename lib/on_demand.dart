@@ -20,7 +20,7 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
 
   Set<Marker> _markers = {}; // <-- NEW for hospital markers
 
-  final String _googleApiKey = "AIzaSyA-JMFRJFPrFKl6KmbpgMnuQbpVafKaPkE"; // <-- PUT YOUR REAL API KEY
+  final String _googleApiKey = "YOUR_API_KEY"; // <-- PUT YOUR REAL API KEY
 
   @override
   void initState() {
@@ -52,9 +52,7 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
           Image.asset('assets/images/Login.jpg', fit: BoxFit.cover),
           Container(color: Colors.black.withAlpha(38)), // <-- FIXED THE DOUBLE DOT
           if (_initialPosition == null)
-            const Center(child: CircularProgressIndicator()) // Loading until location found
-          else if (error != null)
-            Center(child: Text(error!)) // Show error message
+            const Center(child: CircularProgressIndicator())
           else
             GoogleMap(
               initialCameraPosition: _initialPosition!,
@@ -72,7 +70,7 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
               setState(() => positions.clear());
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
+              backgroundColor: Colors.white, // <-- FIXED withValues()
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(50),
@@ -93,46 +91,37 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
 
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      setState(() {
-        error = "Location services are disabled.";
-      });
-      return;
+      error = "Location services are disabled.";
     }
 
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        setState(() {
-          error = "Location permissions are denied. Enable them in settings.";
-        });
-        return;
+        error = 'Location permissions are denied. Enable them in settings.';
       }
     }
-
     if (permission == LocationPermission.deniedForever) {
-      setState(() {
-        error = "Location permissions are permanently denied.";
-      });
-      return;
+      error = 'Location permissions are permanently denied.';
     }
 
-    // Once permission is granted, get the current position
-    setState(() => isProcessing = true);
-    Position pos = await Geolocator.getCurrentPosition();
-    positions.add(pos);
+    if (error == null) {
+      setState(() => isProcessing = true);
+      Position pos = await Geolocator.getCurrentPosition();
+      positions.add(pos);
+      _initialPosition = CameraPosition(
+        target: LatLng(pos.latitude, pos.longitude),
+        zoom: 14.0,
+      );
 
-    _initialPosition = CameraPosition(
-      target: LatLng(pos.latitude, pos.longitude),
-      zoom: 14.0,
-    );
+      await _getNearbyHospitals(pos.latitude, pos.longitude); // <-- NEW: search for hospitals
 
-    setState(() {
-      isProcessing = false;
-    });
+      setState(() {
+        isProcessing = false;
+      });
+    }
 
-    // Get nearby hospitals after getting the user's location
-    await _getNearbyHospitals(pos.latitude, pos.longitude);
+    setState(() {});
   }
 
   Future<void> _getNearbyHospitals(double lat, double lng) async {
@@ -157,8 +146,6 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
           final hospitalLat = hospital['geometry']['location']['lat'];
           final hospitalLng = hospital['geometry']['location']['lng'];
 
-          print('Adding marker for hospital: $hospitalName at ($hospitalLat, $hospitalLng)'); // Debugging log
-
           newMarkers.add(
             Marker(
               markerId: MarkerId(hospitalName),
@@ -175,8 +162,6 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
       }
     } else {
       print('Failed to load nearby hospitals');
-      // Log the response for debugging
-      print('Response body: ${response.body}');
     }
   }
 }
