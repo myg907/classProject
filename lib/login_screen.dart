@@ -44,6 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       style: const TextStyle(color: Colors.white),
+                      cursorColor: Colors.white,
                       onChanged: (value) => email = value,
                       validator: (value) => value == null || value.isEmpty
                           ? 'Enter an email'
@@ -63,6 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       obscureText: true,
                       style: const TextStyle(color: Colors.white),
+                      cursorColor: Colors.white,
                       onChanged: (value) => password = value,
                       validator: (value) {
                         if (value == null || value.length < 8) {

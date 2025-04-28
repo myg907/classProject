@@ -30,37 +30,60 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true, // Allows content to extend behind the AppBar
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text("Nearby Hospitals"),
         centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0, // Remove shadow
+        titleTextStyle: const TextStyle(
+          fontSize: 24,
+          fontFamily: 'Poppins',
+          fontWeight: FontWeight.bold,
+          color: Color.fromARGB(255, 181, 184, 184),
+        ),
       ),
-      body: isProcessing
-          ? const Center(child: CircularProgressIndicator())
-          : error.isNotEmpty
-              ? Center(child: Text(error))
-              : Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        "Hospitals near UNCW:",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Background image
+          Image.asset(
+            'assets/images/Login.jpg', // Make sure this image is in the correct path
+            fit: BoxFit.cover,
+          ),
+          // Semi-transparent overlay to make the text readable
+          Container(color: Colors.black.withAlpha(38)),
+          // Main content (location and hospital list)
+          isProcessing
+              ? const Center(child: CircularProgressIndicator())
+              : error.isNotEmpty
+                  ? Center(child: Text(error, style: const TextStyle(color: Colors.white, fontSize: 16)))
+                  : Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "Hospitals near UNCW:",
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Your current location: $userLocation',
+                            style: const TextStyle(fontSize: 16, color: Colors.white),
+                          ),
+                          const SizedBox(height: 20),
+                          // Display hardcoded hospitals
+                          ...hospitals.map((hospital) => Text(
+                                hospital,
+                                style: const TextStyle(fontSize: 16, color: Colors.white),
+                              )),
+                        ],
                       ),
-                      const SizedBox(height: 20),
-                      Text(
-                        'Your current location: $userLocation', // Display user location
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      const SizedBox(height: 20),
-                      // Spread operator to add each item from the hospitals list to the column
-                      ...hospitals.map((hospital) => Text(
-                            hospital,
-                            style: const TextStyle(fontSize: 16),
-                          )),
-                    ],
-                  ),
-                ),
+                    ),
+        ],
+      ),
     );
   }
 
