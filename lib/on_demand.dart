@@ -52,7 +52,9 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
           Image.asset('assets/images/Login.jpg', fit: BoxFit.cover),
           Container(color: Colors.black.withAlpha(38)), // <-- FIXED THE DOUBLE DOT
           if (_initialPosition == null)
-            const Center(child: CircularProgressIndicator())
+            const Center(child: CircularProgressIndicator()) // Loading until location found
+          else if (error != null)
+            Center(child: Text(error!)) // Show error message
           else
             GoogleMap(
               initialCameraPosition: _initialPosition!,
@@ -70,7 +72,7 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
               setState(() => positions.clear());
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white, // <-- FIXED withValues()
+              backgroundColor: Colors.white,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(50),
@@ -91,37 +93,46 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
 
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      error = "Location services are disabled.";
+      setState(() {
+        error = "Location services are disabled.";
+      });
+      return;
     }
 
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        error = 'Location permissions are denied. Enable them in settings.';
+        setState(() {
+          error = "Location permissions are denied. Enable them in settings.";
+        });
+        return;
       }
     }
+
     if (permission == LocationPermission.deniedForever) {
-      error = 'Location permissions are permanently denied.';
-    }
-
-    if (error == null) {
-      setState(() => isProcessing = true);
-      Position pos = await Geolocator.getCurrentPosition();
-      positions.add(pos);
-      _initialPosition = CameraPosition(
-        target: LatLng(pos.latitude, pos.longitude),
-        zoom: 14.0,
-      );
-
-      await _getNearbyHospitals(pos.latitude, pos.longitude); // <-- NEW: search for hospitals
-
       setState(() {
-        isProcessing = false;
+        error = "Location permissions are permanently denied.";
       });
+      return;
     }
 
-    setState(() {});
+    // Once permission is granted, get the current position
+    setState(() => isProcessing = true);
+    Position pos = await Geolocator.getCurrentPosition();
+    positions.add(pos);
+
+    _initialPosition = CameraPosition(
+      target: LatLng(pos.latitude, pos.longitude),
+      zoom: 14.0,
+    );
+
+    setState(() {
+      isProcessing = false;
+    });
+
+    // Get nearby hospitals after getting the user's location
+    await _getNearbyHospitals(pos.latitude, pos.longitude);
   }
 
   Future<void> _getNearbyHospitals(double lat, double lng) async {
@@ -146,6 +157,8 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
           final hospitalLat = hospital['geometry']['location']['lat'];
           final hospitalLng = hospital['geometry']['location']['lng'];
 
+          print('Adding marker for hospital: $hospitalName at ($hospitalLat, $hospitalLng)'); // Debugging log
+
           newMarkers.add(
             Marker(
               markerId: MarkerId(hospitalName),
@@ -162,6 +175,8 @@ class _OnDemandScreenState extends State<OnDemandScreen> {
       }
     } else {
       print('Failed to load nearby hospitals');
+      // Log the response for debugging
+      print('Response body: ${response.body}');
     }
   }
 }
