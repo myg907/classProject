@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'week_screen.dart';
 import 'progress_screen.dart';
 import 'dart:developer';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -31,7 +32,7 @@ class _SearchScreenState extends State<SearchScreen> {
             fontSize: 22,
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w600,
-            color: Color.fromARGB(255, 3, 15, 23),
+            color: Color.fromARGB(255, 83, 150, 172),
           ),
         ),
       ),
@@ -50,16 +51,23 @@ class _SearchScreenState extends State<SearchScreen> {
               children: [
                 TextField(
                   controller: _controller,
+                  cursorColor: Colors.green,
                   decoration: InputDecoration(
                     hintText: "Enter a week label",
-                    hintStyle: const TextStyle(color: Colors.white70),
+                    hintStyle: const TextStyle(
+                        color: Color.fromARGB(179, 110, 109, 109)),
                     filled: true,
-                    fillColor: Colors.white.withValues(alpha: 0.3),
-                    border: OutlineInputBorder(
+                    fillColor: const Color.fromARGB(235, 255, 255, 255),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.green),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.green, width: 2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.black),
                   onChanged: (value) {
                     if (value.isEmpty) {
                       setState(() => searchResults = []);
@@ -109,25 +117,51 @@ class _SearchScreenState extends State<SearchScreen> {
       itemCount: searchResults.length,
       itemBuilder: (context, index) {
         final doc = searchResults[index];
-        return Card(
-          color: Colors.white.withValues(alpha: .8),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: ListTile(
-            leading: const Icon(Icons.bookmark, size: 32, color: Colors.teal),
-            title: Text(doc.get('label')),
-            subtitle: Text("Order: ${doc.get('order')}"),
-            trailing: Text(doc.get('status')),
-            onTap: () {
-              final week = Week.fromDocument(doc);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => WeekScreen(week: week),
-                ),
-              );
-            },
-          ),
+        final weekId = doc.id;
+        final label = doc.get('label');
+        final order = doc.get('order');
+
+        return FutureBuilder<DocumentSnapshot>(
+          future: FirebaseFirestore.instance
+              .collection('Users')
+              .doc(FirebaseAuth.instance.currentUser!.uid)
+              .collection('WeekProgress')
+              .doc(weekId)
+              .get(),
+          builder: (context, snapshot) {
+            String statusText = 'unknown';
+
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              statusText = '...';
+            } else if (snapshot.hasData && snapshot.data!.exists) {
+              final data = snapshot.data!.data() as Map<String, dynamic>?;
+              statusText = data?['status'] ?? 'not started';
+            } else {
+              statusText = 'not started';
+            }
+
+            return Card(
+              color: const Color.fromARGB(243, 255, 255, 255),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              child: ListTile(
+                leading:
+                    const Icon(Icons.bookmark, size: 32, color: Colors.teal),
+                title: Text(label),
+                subtitle: Text("Order: $order"),
+                trailing: Text(statusText),
+                onTap: () {
+                  final week = Week.fromDocument(doc);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => WeekScreen(week: week),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
         );
       },
     );
