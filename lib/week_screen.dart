@@ -4,9 +4,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'login_screen.dart';
 import 'progress_screen.dart';
 import 'survey_screen.dart';
-import 'package:video_player/video_player.dart';
-import 'dart:developer';
+//import 'package:video_player/video_player.dart';
+//import 'dart:developer';
 //import 'splash_screen.dart';
+import 'video_player_widget.dart';
 
 class WeekScreen extends StatefulWidget {
   final Week week;
@@ -18,8 +19,8 @@ class WeekScreen extends StatefulWidget {
 }
 
 class WeekScreenState extends State<WeekScreen> {
-  final Map<String, VideoPlayerController> _videoControllers = {};
-  final Map<String, bool> _videoInitialized = {};
+  // final Map<String, VideoPlayerController> _videoControllers = {};
+  // final Map<String, bool> _videoInitialized = {};
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late CollectionReference _weeklyContentRef;
@@ -79,32 +80,32 @@ class WeekScreenState extends State<WeekScreen> {
     return completed != true;
   }
 
-  Future<void> _initializeVideo(String sessionId, String videoPath) async {
-    if (_videoInitialized.containsKey(sessionId) &&
-        _videoInitialized[sessionId]!) {
-      return;
-    }
+  // Future<void> _initializeVideo(String sessionId, String videoPath) async {
+  //   if (_videoInitialized.containsKey(sessionId) &&
+  //       _videoInitialized[sessionId]!) {
+  //     return;
+  //   }
 
-    final controller = VideoPlayerController.asset('assets/videos/$videoPath');
+  //   final controller = VideoPlayerController.asset('assets/videos/$videoPath');
 
-    try {
-      await controller.initialize();
-      setState(() {
-        _videoControllers[sessionId] = controller;
-        _videoInitialized[sessionId] = true;
-      });
-    } catch (e) {
-      log("Error initializing video for $sessionId: $e");
-    }
-  }
+  //   try {
+  //     await controller.initialize();
+  //     setState(() {
+  //       _videoControllers[sessionId] = controller;
+  //       _videoInitialized[sessionId] = true;
+  //     });
+  //   } catch (e) {
+  //     log("Error initializing video for $sessionId: $e");
+  //   }
+  // }
 
-  @override
-  void dispose() {
-    for (var controller in _videoControllers.values) {
-      controller.dispose();
-    }
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   for (var controller in _videoControllers.values) {
+  //     controller.dispose();
+  //   }
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -230,14 +231,13 @@ class WeekScreenState extends State<WeekScreen> {
                               itemBuilder: (context, index) {
                                 final doc = contentDocs[index];
                                 final data = doc.data() as Map<String, dynamic>;
-                                final description =
-                                    data['description'] ?? 'No description';
+
                                 final question = data['question'] ?? '';
                                 final videoAsset = data['video'] ?? '';
                                 final sessionId = doc.id;
-                                _initializeVideo(sessionId, videoAsset);
-                                return _buildContentCard(description, question,
-                                    sessionId, videoAsset);
+                                //_initializeVideo(sessionId, videoAsset);
+                                return _buildContentCard(
+                                    question, sessionId, videoAsset);
                               },
                             ),
                           ),
@@ -288,10 +288,10 @@ class WeekScreenState extends State<WeekScreen> {
   }
 
   Widget _buildContentCard(
-      String description, String question, String sessionId, String videoPath) {
+      String question, String sessionId, String videoPath) {
     final responseController = TextEditingController();
     final formKey = GlobalKey<FormState>();
-    final controller = _videoControllers[sessionId];
+    //final controller = _videoControllers[sessionId];
 
     final sessionDoc = _firestore
         .collection('Users')
@@ -322,24 +322,8 @@ class WeekScreenState extends State<WeekScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (controller != null && controller.value.isInitialized)
-                    AspectRatio(
-                      aspectRatio: controller.value.aspectRatio,
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            controller.value.isPlaying
-                                ? controller.pause()
-                                : controller.play();
-                          });
-                        },
-                        child: VideoPlayer(controller),
-                      ),
-                    ),
+                  VideoPlayerWidget(videoUrl: videoPath),
                   const SizedBox(height: 12),
-                  Text(description,
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   Text(question, style: const TextStyle(fontSize: 14)),
                   const SizedBox(height: 10),
