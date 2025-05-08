@@ -349,7 +349,7 @@ class ProgressContentScreenState extends State<ProgressContentScreen> {
             fontSize: 22,
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w600,
-            color: Color.fromARGB(255, 181, 184, 184),
+            color: Color.fromARGB(255, 83, 150, 172),
           ),
         ),
       ),
@@ -412,13 +412,16 @@ class ProgressContentScreenState extends State<ProgressContentScreen> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: ListTile(
-                                      title: Text(
-                                        week.label,
-                                        style: TextStyle(
-                                          fontFamily: 'Poppins',
-                                          fontWeight: FontWeight.bold,
-                                          color:
-                                              Color.fromARGB(255, 43, 113, 105),
+                                      title: Material(
+                                        color: Colors.transparent,
+                                        child: Text(
+                                          week.label,
+                                          style: TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontWeight: FontWeight.bold,
+                                            color: Color.fromARGB(
+                                                255, 43, 113, 105),
+                                          ),
                                         ),
                                       ),
                                       subtitle: Text(

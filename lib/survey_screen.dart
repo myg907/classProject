@@ -78,14 +78,16 @@ class _SurveyScreenState extends State<SurveyScreen> {
     return AlertDialog(
       backgroundColor: Colors.white.withValues(alpha: 0.95),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: const Text("Complete Survey", style: TextStyle(fontSize: 22, fontFamily: 'Poppins')),
+      title: const Text("Complete Survey",
+          style: TextStyle(fontSize: 22, fontFamily: 'Poppins')),
       content: _isLoading
           ? const SizedBox(
               height: 80, child: Center(child: CircularProgressIndicator()))
           : Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text("Week survey question goes here.\n\nLink:", style: TextStyle(fontFamily: 'Poppins')),
+                Text("Week survey question goes here.\n\nLink:",
+                    style: TextStyle(fontFamily: 'Poppins')),
                 if (_surveyUrl != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
@@ -101,11 +103,25 @@ class _SurveyScreenState extends State<SurveyScreen> {
                   ),
                 const SizedBox(height: 20),
                 TextField(
+                  cursorColor: Colors.green,
                   controller: _codeController,
                   decoration: InputDecoration(
                     labelText: 'Enter Completion Code',
+                    labelStyle:
+                        TextStyle(color: const Color.fromARGB(255, 13, 30, 13)),
                     errorText: _errorText,
-                    border: const OutlineInputBorder(),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.green),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.green, width: 2.0),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.red),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.redAccent),
+                    ),
                   ),
                 ),
               ],
@@ -113,11 +129,16 @@ class _SurveyScreenState extends State<SurveyScreen> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false), // allow dismiss
-          child: const Text("Dismiss", style: TextStyle(color: Colors.red,fontFamily: 'Poppins')),
+          child: const Text("Dismiss",
+              style: TextStyle(color: Colors.red, fontFamily: 'Poppins')),
         ),
         ElevatedButton(
           onPressed: _submitCode,
-          child: const Text("Submit", style: TextStyle(fontFamily: 'Poppins', color: Colors.black,)),
+          child: const Text("Submit",
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                color: Colors.black,
+              )),
         ),
       ],
     );

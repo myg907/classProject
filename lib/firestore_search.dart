@@ -31,7 +31,7 @@ class _SearchScreenState extends State<SearchScreen> {
             fontSize: 22,
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w600,
-            color: Color.fromARGB(255, 181, 184, 184),
+            color: Color.fromARGB(255, 3, 15, 23),
           ),
         ),
       ),
